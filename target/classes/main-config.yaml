@@ -1,0 +1,7 @@
+clientConfig:
+  httpRequestTimeout: 1000000
+tokenConfig:
+  clientSecret: dddddddddddddddddddd
+  publisherEndpoint: publisher
+  registrationEndpoint: registration
+  tokenEndpoint: token

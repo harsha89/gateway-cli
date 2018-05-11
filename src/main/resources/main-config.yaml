@@ -1,0 +1,11 @@
+clientConfig:
+  httpRequestTimeout: 1000000
+tokenConfig:
+  clientId: ''
+  clientSecret: dddddddddddddddddddd
+  publisherEndpoint: publisher
+  registrationEndpoint: registration
+  tokenEndpoint: token
+  username: ''
+  trustore: ''
+  trustorePassword: ''
