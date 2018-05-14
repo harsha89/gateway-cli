@@ -1,5 +1,6 @@
 package org.wso2.apimgt.gateway.codegen.cmd;
 
+import org.wso2.apimgt.gateway.codegen.config.bean.Config;
 import org.wso2.apimgt.gateway.codegen.exception.GatewayCliLauncherException;
 
 import java.io.BufferedReader;
@@ -9,6 +10,16 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 public class GatewayCmdUtils {
+
+    private static Config config;
+
+    public static Config getConfig() {
+        return config;
+    }
+
+    public static void setConfig(Config configFromFile) {
+        config = configFromFile;
+    }
 
     public static String readFileAsString(String path) throws IOException {
         InputStream is = ClassLoader.getSystemResourceAsStream(path);

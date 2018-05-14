@@ -1,66 +1,59 @@
 package org.wso2.apimgt.gateway.codegen.token;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.wso2.apimgt.gateway.codegen.cmd.GatewayCmdUtils;
+import org.wso2.apimgt.gateway.codegen.config.ConfigYAMLParser;
+import org.wso2.apimgt.gateway.codegen.config.bean.Config;
+import org.wso2.apimgt.gateway.codegen.exception.ConfigParserException;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.xml.bind.DatatypeConverter;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.Collection;
+import java.nio.charset.StandardCharsets;
 
 public class TokenManagementImpl implements TokenManagement {
-    @Override
-    public String generateAccessToken(String username, char[] password, String clientId, char[] clientSecret) {
-        return null;
-    }
 
     @Override
-    public String generateClientIdAndSecret() {
-        String applicationName = "Integration_Test_App";
+    public String generateAccessToken(String username, char[] password, String clientId, char[] clientSecret) {
         URL url;
-        HttpURLConnection urlConn = null;
+        HttpsURLConnection urlConn = null;
+        //calling token endpoint
         try {
-            //Create json payload for DCR endpoint
-            JsonObject json = new JsonObject();
-            json.addProperty("callbackUrl", "http://test.callback.lk/");
-            json.addProperty("clientName", applicationName);
-            json.addProperty("tokenScope", "Production");
-            json.addProperty("owner", adminUsername+ '@' + tenantDomain);
-            json.addProperty("grantType", "client_credentials");
-            // Calling DCR endpoint
-            String dcrEndpoint = "http://127.0.0.1:9763/client-registration/v0.12/register";
-            url = new URL(dcrEndpoint);
-            urlConn = (HttpURLConnection) url.openConnection();
+            url = new URL("https://localhost:8243/token");
+            urlConn = (HttpsURLConnection) url.openConnection();
             urlConn.setDoOutput(true);
             urlConn.setRequestMethod("POST");
-            urlConn.setRequestProperty("Content-Type", "application/json");
-            String clientEncoded = DatatypeConverter.printBase64Binary((adminUsername+ '@' + tenantDomain + ':' + adminPassword)
-                    .getBytes(StandardCharsets.UTF_8));
-            urlConn.setRequestProperty("Authorization", "Basic " + clientEncoded); //temp fix
-            urlConn.getOutputStream().write((json.toString()).getBytes("UTF-8"));
+            urlConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            String clientEncoded = DatatypeConverter.printBase64Binary(
+                    (clientId + ':' + new String(clientSecret)).getBytes(StandardCharsets.UTF_8));
+            urlConn.setRequestProperty("Authorization", "Basic " + clientEncoded);
+            String postParams = "grant_type=password&username="+username+"&password="+new String(password);
+            postParams += "&scope=" + TokenManagementConstants.REQUESTED_TOKEN_SCOPE;
+            urlConn.getOutputStream().write((postParams).getBytes("UTF-8"));
+            System.out.println(postParams);
             int responseCode = urlConn.getResponseCode();
-            if (responseCode == 200) {  //If the DCR call is success
+            if (responseCode == 200) {
+                ObjectMapper mapper = new ObjectMapper();
                 String responseStr = getResponseString(urlConn.getInputStream());
-                JsonParser parser = new JsonParser();
-                JsonObject jObj = parser.parse(responseStr).getAsJsonObject();
-                consumerKey = jObj.getAsJsonPrimitive("clientId").getAsString();
-                consumerSecret = jObj.getAsJsonPrimitive("clientSecret").getAsString();
-            } else { //If DCR call fails
-                throw new RuntimeException("DCR call failed. Status code: " + responseCode);
+                JsonNode rootNode = mapper.readTree(responseStr);
+                String accessToken = rootNode.path("access_token").asText();
+                return accessToken;
+            } else {
+                throw new RuntimeException("Error occurred while getting token. Status code: " + responseCode);
             }
-        } catch (IOException e) {
-            String errorMsg = "Can not create OAuth application  : " + applicationName;
-            throw new RuntimeException(errorMsg, e);
+        } catch (Exception e) {
+            String msg = "Error while creating the new token for token regeneration.";
+            throw new RuntimeException(msg, e);
         } finally {
             if (urlConn != null) {
                 urlConn.disconnect();
@@ -68,53 +61,69 @@ public class TokenManagementImpl implements TokenManagement {
         }
     }
 
-    private void applySslSettings() {
+    @Override
+    public String generateClientIdAndSecret() {
+        URL url;
+        HttpURLConnection urlConn = null;
         try {
-            KeyManager[] keyManagers = null;
-            TrustManager[] trustManagers = null;
-            HostnameVerifier hostnameVerifier = null;
-            if (!verifyingSsl) {
-                trustAll = new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() { return null; }
-                };
-                SSLContext sslContext = SSLContext.getInstance("TLS");
-                trustManagers = new TrustManager[]{ trustAll };
-                hostnameVerifier = new HostnameVerifier() {
-                    @Override
-                    public boolean verify(String hostname, SSLSession session) { return true; }
-                };
-            } else if (sslCaCert != null) {
-                char[] password = null; // Any password will work.
-                CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-                Collection<? extends Certificate> certificates = certificateFactory.generateCertificates(sslCaCert);
-                if (certificates.isEmpty()) {
-                    throw new IllegalArgumentException("expected non-empty set of trusted certificates");
-                }
-                KeyStore caKeyStore = newEmptyKeyStore(password);
-                int index = 0;
-                for (Certificate certificate : certificates) {
-                    String certificateAlias = "ca" + Integer.toString(index++);
-                    caKeyStore.setCertificateEntry(certificateAlias, certificate);
-                }
-                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                trustManagerFactory.init(caKeyStore);
-                trustManagers = trustManagerFactory.getTrustManagers();
-            }
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode application = mapper.createObjectNode();
+            application.put(TokenManagementConstants.CALLBACK_URL, TokenManagementConstants.APPLICATION_CALLBACK_URL);
+            application.put(TokenManagementConstants.CLIENT_NAME, TokenManagementConstants.APPLICATION_NAME);
+            application.put(TokenManagementConstants.TOKEN_SCOPE, TokenManagementConstants.REQUESTED_TOKEN_SCOPE);
+            application.put(TokenManagementConstants.OWNER, "admin");
+            application.put(TokenManagementConstants.GRANT_TYPE, TokenManagementConstants.PASSWORD_GRANT_TYPE);
+            System.out.println(application.toString());
 
-            if (keyManagers != null || trustManagers != null) {
-                SSLContext sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(keyManagers, trustManagers, new SecureRandom());
-                httpClient.setSslSocketFactory(sslContext.getSocketFactory());
-            } else {
-                httpClient.setSslSocketFactory(null);
+            // Calling DCR endpoint
+            Config config = GatewayCmdUtils.getConfig();
+            String dcrEndpoint = config.getTokenConfig().getRegistrationEndpoint();
+            url = new URL(dcrEndpoint);
+            urlConn = (HttpURLConnection) url.openConnection();
+            urlConn.setDoOutput(true);
+            urlConn.setRequestMethod("POST");
+            urlConn.setRequestProperty("Content-Type", "application/json");
+            String clientEncoded = DatatypeConverter.printBase64Binary(("admin" + ':' + "admin")
+                    .getBytes(StandardCharsets.UTF_8));
+            urlConn.setRequestProperty("Authorization", "Basic " + clientEncoded); //temp fix
+            urlConn.getOutputStream().write((application.toString()).getBytes("UTF-8"));
+            int responseCode = urlConn.getResponseCode();
+            if (responseCode == 200) {  //If the DCR call is success
+                String responseStr = getResponseString(urlConn.getInputStream());
+                JsonNode rootNode = mapper.readTree(responseStr);
+                JsonNode clientIdNode = rootNode.path("clientId");
+                JsonNode clientSecretNode = rootNode.path("clientSecret");
+                String clientId = clientIdNode.asText();
+                String clientSecret = clientSecretNode.asText();
+                config.getTokenConfig().setClientSecret(clientSecret);
+                config.getTokenConfig().setClientId(clientId);
+                String configPath = "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/main-config.yaml";
+                ConfigYAMLParser.write(configPath, config, Config.class);
+            } else { //If DCR call fails
+                throw new RuntimeException("DCR call failed. Status code: " + responseCode);
             }
-            httpClient.setHostnameVerifier(hostnameVerifier);
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            String errorMsg = "Can not create OAuth application  : ";
+            throw new RuntimeException(errorMsg, e);
+        } catch (ConfigParserException e) {
+            String errorMsg = "Can not create OAuth application  : ";
+            throw new RuntimeException(errorMsg, e);
+        } finally {
+            if (urlConn != null) {
+                urlConn.disconnect();
+            }
         }
+        return null;
+    }
+
+    private static String getResponseString(InputStream input) throws IOException {
+        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+            String file = "";
+            String str;
+            while ((str = buffer.readLine()) != null) {
+                file += str;
+            }
+            return file;
+        }
+    }
 }

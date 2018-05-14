@@ -29,6 +29,9 @@ import org.wso2.apimgt.gateway.codegen.config.ConfigYAMLParser;
 import org.wso2.apimgt.gateway.codegen.config.bean.Config;
 import org.wso2.apimgt.gateway.codegen.exception.ConfigParserException;
 import org.wso2.apimgt.gateway.codegen.exception.GatewayCliLauncherException;
+import org.wso2.apimgt.gateway.codegen.service.APIService;
+import org.wso2.apimgt.gateway.codegen.service.APIServiceImpl;
+import org.wso2.apimgt.gateway.codegen.token.TokenManagementImpl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,11 +57,20 @@ public class Main {
         try {
             Optional<GatewayLauncherCmd> optionalInvokedCmd = getInvokedCmd(args);
             optionalInvokedCmd.ifPresent(GatewayLauncherCmd::execute);
+            System.setProperty("javax.net.ssl.trustStore", "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/client-truststore.jks");
+            System.setProperty("javax.net.ssl.trustStorePassword", "wso2carbon");
             String configPath = "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/main-config.yaml";
             Config config =
                     ConfigYAMLParser.parse(configPath, Config.class);
             config.getTokenConfig().setClientSecret("dddddddddddddddddddd");
             ConfigYAMLParser.write(configPath, config, Config.class);
+            TokenManagementImpl tokenManagement = new TokenManagementImpl();
+            GatewayCmdUtils.setConfig(config);
+            tokenManagement.generateClientIdAndSecret();
+            String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(), config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
+            System.out.println(accessToken);
+            APIService apiService = new APIServiceImpl();
+            apiService.getAPI("28a4720c-ee1d-41d5-8606-8ae466c97911", accessToken);
         } catch (GatewayCliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);

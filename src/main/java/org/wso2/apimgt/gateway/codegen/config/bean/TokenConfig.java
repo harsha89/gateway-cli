@@ -8,6 +8,24 @@ public class TokenConfig {
     private String username;
     private String clientId;
     private String clientSecret;
+    private String trustoreLocation;
+    private String trustorePassword;
+
+    public String getTrustoreLocation() {
+        return trustoreLocation;
+    }
+
+    public void setTrustoreLocation(String trustoreLocation) {
+        this.trustoreLocation = trustoreLocation;
+    }
+
+    public String getTrustorePassword() {
+        return trustorePassword;
+    }
+
+    public void setTrustorePassword(String trustorePassword) {
+        this.trustorePassword = trustorePassword;
+    }
 
     public String getPublisherEndpoint() {
         return publisherEndpoint;
