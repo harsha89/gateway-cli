@@ -19,12 +19,12 @@ package org.wso2.apimgt.gateway.codegen.exception;
 /**
  * Exception type definition for OpenAPI to BalOpenAPI parsing related errors.
  */
-public class BallerinaOpenApiException extends Exception {
-    public BallerinaOpenApiException(String message, Throwable e) {
+public class BallerinaServiceGenException extends Exception {
+    public BallerinaServiceGenException(String message, Throwable e) {
         super(message, e);
     }
 
-    public BallerinaOpenApiException(String message) {
+    public BallerinaServiceGenException(String message) {
         super(message);
     }
 }

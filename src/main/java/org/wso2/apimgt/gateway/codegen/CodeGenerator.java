@@ -25,13 +25,13 @@ import com.github.jknack.handlebars.context.MapValueResolver;
 import com.github.jknack.handlebars.helper.StringHelpers;
 import com.github.jknack.handlebars.io.ClassPathTemplateLoader;
 import com.github.jknack.handlebars.io.FileTemplateLoader;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.parser.OpenAPIV3Parser;
+import io.swagger.models.Swagger;
+import io.swagger.parser.SwaggerParser;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.wso2.apimgt.gateway.codegen.exception.BallerinaOpenApiException;
-import org.wso2.apimgt.gateway.codegen.model.BallerinaOpenApi;
+import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
+import org.wso2.apimgt.gateway.codegen.model.BallerinaService;
 import org.wso2.apimgt.gateway.codegen.model.GenSrcFile;
+import org.wso2.apimgt.gateway.codegen.service.bean.APIDTO;
 import org.wso2.apimgt.gateway.codegen.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.codegen.utils.GeneratorConstants;
 
@@ -56,27 +56,16 @@ public class CodeGenerator {
      * Generated source will be written to a ballerina package at {@code outPath}
      * <p>Method can be user for generating Ballerina mock services and clients</p>
      *
-     * @param type           Output type. Following types are supported
-     *                       <ul>
-     *                       <li>mock</li>
-     *                       <li>client</li>
-     *                       </ul>
-     * @param definitionPath Input Open Api Definition file path
      * @param outPath        Destination file path to save generated source files. If not provided
      *                       {@code definitionPath} will be used as the default destination path
      * @throws IOException               when file operations fail
-     * @throws BallerinaOpenApiException when code generator fails
+     * @throws BallerinaServiceGenException when code generator fails
      */
-    public void generate(GeneratorConstants.GenType type, String definitionPath, String outPath)
-            throws IOException, BallerinaOpenApiException {
-        if (!CodegenUtils.isBallerinaProject(Paths.get(outPath))) {
-            throw new BallerinaOpenApiException("Output path is not a valid ballerina project directory. Use "
-                    + "'ballerina init' to generate a new project");
-        }
-
+    public void generate(String outPath, APIDTO apidto)
+            throws IOException, BallerinaServiceGenException {
         Path srcPath = CodegenUtils.getSourcePath(srcPackage, outPath);
         Path implPath = CodegenUtils.getImplPath(srcPackage, srcPath);
-        List<GenSrcFile> genFiles = generate(type, definitionPath);
+        List<GenSrcFile> genFiles = generate(apidto);
         writeGeneratedSources(genFiles, srcPath, implPath);
     }
 
@@ -85,44 +74,19 @@ public class CodeGenerator {
      * Generated code will be returned as a list of source files
      * <p>Method can be user for generating Ballerina mock services and clients</p>
      *
-     * @param type           Output type. Following types are supported
-     *                       <ul>
-     *                       <li>mock</li>
-     *                       <li>client</li>
-     *                       </ul>
-     * @param definitionPath Input Open Api Definition file path
+     * * @param apiDefinition Input Open Api Definition file path
      * @return a list of generated source files wrapped as {@link GenSrcFile}
      * @throws IOException               when file operations fail
-     * @throws BallerinaOpenApiException when open api context building fail
+     * @throws BallerinaServiceGenException when open api context building fail
      */
-    public List<GenSrcFile> generate(GeneratorConstants.GenType type, String definitionPath)
-            throws IOException, BallerinaOpenApiException {
-        OpenAPI api = new OpenAPIV3Parser().read(definitionPath);
-
-        if (api == null) {
-            throw new BallerinaOpenApiException("Couldn't read the definition from file: " + definitionPath);
-        }
-        if (StringUtils.isEmpty(api.getInfo().getTitle())) {
-            api.getInfo().setTitle(GeneratorConstants.UNTITLED_SERVICE);
-        }
-
-        // modelPackage is not in use at the moment. All models will be written into same package as other src files.
-        // Therefore value set to modelPackage is ignored here
-        BallerinaOpenApi definitionContext = new BallerinaOpenApi().buildContext(api).srcPackage(srcPackage)
+    public List<GenSrcFile> generate(APIDTO api)
+            throws IOException, BallerinaServiceGenException {
+        SwaggerParser parser = new SwaggerParser();
+        Swagger swagger = parser.parse(api.getApiDefinition());
+        BallerinaService definitionContext = new BallerinaService().buildContext(swagger).srcPackage(srcPackage)
                 .modelPackage(srcPackage);
         List<GenSrcFile> sourceFiles;
-
-        switch (type) {
-            case CLIENT:
-                sourceFiles = generateClient(definitionContext);
-                break;
-            case MOCK:
-                sourceFiles = generateMock(definitionContext);
-                break;
-            default:
-                return null;
-        }
-
+        sourceFiles = generateMock(definitionContext);
         return sourceFiles;
     }
 
@@ -134,9 +98,7 @@ public class CodeGenerator {
      * @param templateName Name of the parent template to be used
      * @param outPath      Destination path for writing the resulting source file
      * @throws IOException when file operations fail
-     * @deprecated This method is now deprecated. Use {@link #generate(GeneratorConstants.GenType, String)} and implement a
      * file write functionality your self, if you need to customize file writing steps.
-     * Otherwise use {{@link #generate(GeneratorConstants.GenType, String, String)}} to directly write generated sources
      * to a ballerina package.
      */
     @Deprecated
@@ -223,7 +185,7 @@ public class CodeGenerator {
      * @return generated source files as a list of {@link GenSrcFile}
      * @throws IOException when code generation with specified templates fails
      */
-    private List<GenSrcFile> generateClient(BallerinaOpenApi context) throws IOException {
+    private List<GenSrcFile> generateClient(BallerinaService context) throws IOException {
         if (srcPackage == null || srcPackage.isEmpty()) {
             srcPackage = GeneratorConstants.DEFAULT_CLIENT_PKG;
         }
@@ -251,7 +213,7 @@ public class CodeGenerator {
      * @return generated source files as a list of {@link GenSrcFile}
      * @throws IOException when code generation with specified templates fails
      */
-    private List<GenSrcFile> generateMock(BallerinaOpenApi context) throws IOException {
+    private List<GenSrcFile> generateMock(BallerinaService context) throws IOException {
         if (srcPackage == null || srcPackage.isEmpty()) {
             srcPackage = GeneratorConstants.DEFAULT_MOCK_PKG;
         }
@@ -289,7 +251,7 @@ public class CodeGenerator {
      * @return String with populated template
      * @throws IOException when template population fails
      */
-    private String getContent(BallerinaOpenApi object, String templateDir, String templateName) throws IOException {
+    private String getContent(BallerinaService object, String templateDir, String templateName) throws IOException {
         Template template = compileTemplate(templateDir, templateName);
         Context context = Context.newBuilder(object)
                 .resolver(MapValueResolver.INSTANCE, JavaBeanValueResolver.INSTANCE, FieldValueResolver.INSTANCE)

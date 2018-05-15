@@ -25,12 +25,15 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.apimgt.gateway.codegen.CodeGenerator;
 import org.wso2.apimgt.gateway.codegen.config.ConfigYAMLParser;
 import org.wso2.apimgt.gateway.codegen.config.bean.Config;
+import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.codegen.exception.ConfigParserException;
 import org.wso2.apimgt.gateway.codegen.exception.GatewayCliLauncherException;
 import org.wso2.apimgt.gateway.codegen.service.APIService;
 import org.wso2.apimgt.gateway.codegen.service.APIServiceImpl;
+import org.wso2.apimgt.gateway.codegen.service.bean.APIDTO;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagementImpl;
 
 import java.io.IOException;
@@ -70,11 +73,17 @@ public class Main {
             String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(), config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
             System.out.println(accessToken);
             APIService apiService = new APIServiceImpl();
-            apiService.getAPI("28a4720c-ee1d-41d5-8606-8ae466c97911", accessToken);
+            APIDTO apidto = apiService.getAPI("59fff422-e12c-4814-ac16-33a000d3f486", accessToken);
+            CodeGenerator codeGenerator = new CodeGenerator();
+            codeGenerator.generate("/home/harsha/Downloads/gentest/gen", apidto);
         } catch (GatewayCliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
         } catch (ConfigParserException e) {
+            e.printStackTrace();
+        } catch (BallerinaServiceGenException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

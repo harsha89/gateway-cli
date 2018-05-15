@@ -1,6 +1,7 @@
 import ballerina/log;
 import ballerina/http;
 import ballerina/swagger;
+import wso2/gateway;
 
 {{#servers}}endpoint http:Listener ep{{@index}} { {{#host}}
     host: "{{host}}",{{/host}}

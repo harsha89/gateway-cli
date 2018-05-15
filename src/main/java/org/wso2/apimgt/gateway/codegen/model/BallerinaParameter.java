@@ -16,13 +16,9 @@
 
 package org.wso2.apimgt.gateway.codegen.model;
 
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.examples.Example;
-import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.parameters.Parameter;
-import org.wso2.apimgt.gateway.codegen.exception.BallerinaOpenApiException;
-
-import java.util.Map;
+import io.swagger.models.Swagger;
+import io.swagger.models.parameters.Parameter;
+import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 
 /**
  * Wraps the {@link Parameter} from swagger models for easier templating.
@@ -34,41 +30,20 @@ public class BallerinaParameter implements BallerinaSwaggerObject<BallerinaParam
     private String in;
     private String description;
     private Boolean required;
-    private Boolean deprecated;
     private Boolean allowEmptyValue;
-    private String ref;
-    private Parameter.StyleEnum style;
-    private Boolean explode;
-    private Boolean allowReserved;
-    private BallerinaSchema schema;
-    private Map<String, Example> examples;
-    private Object example;
-    private Content content;
-    private Map<String, Object> extensions;
 
     @Override
-    public BallerinaParameter buildContext(Parameter parameter) throws BallerinaOpenApiException {
+    public BallerinaParameter buildContext(Parameter parameter) throws BallerinaServiceGenException {
         return buildContext(parameter, null);
     }
 
     @Override
-    public BallerinaParameter buildContext(Parameter parameter, OpenAPI openAPI) throws BallerinaOpenApiException {
+    public BallerinaParameter buildContext(Parameter parameter, Swagger swagger) throws BallerinaServiceGenException {
         this.name = parameter.getName();
         this.in = parameter.getIn();
         this.description = parameter.getDescription();
         this.required = parameter.getRequired();
-        this.deprecated = parameter.getDeprecated();
         this.allowEmptyValue = parameter.getAllowEmptyValue();
-        this.ref = parameter.get$ref();
-        this.style = parameter.getStyle();
-        this.explode = parameter.getExplode();
-        this.allowReserved = parameter.getAllowReserved();
-        this.examples = parameter.getExamples();
-        this.example = parameter.getExample();
-        this.content = parameter.getContent();
-        this.extensions = parameter.getExtensions();
-        this.schema = new BallerinaSchema().buildContext(parameter.getSchema(), openAPI);
-
         return this;
     }
 
@@ -91,49 +66,5 @@ public class BallerinaParameter implements BallerinaSwaggerObject<BallerinaParam
 
     public Boolean getRequired() {
         return required;
-    }
-
-    public Boolean getDeprecated() {
-        return deprecated;
-    }
-
-    public Boolean getAllowEmptyValue() {
-        return allowEmptyValue;
-    }
-
-    public String getRef() {
-        return ref;
-    }
-
-    public Parameter.StyleEnum getStyle() {
-        return style;
-    }
-
-    public Boolean getExplode() {
-        return explode;
-    }
-
-    public Boolean getAllowReserved() {
-        return allowReserved;
-    }
-
-    public BallerinaSchema getSchema() {
-        return schema;
-    }
-
-    public Map<String, Example> getExamples() {
-        return examples;
-    }
-
-    public Object getExample() {
-        return example;
-    }
-
-    public Content getContent() {
-        return content;
-    }
-
-    public Map<String, Object> getExtensions() {
-        return extensions;
     }
 }

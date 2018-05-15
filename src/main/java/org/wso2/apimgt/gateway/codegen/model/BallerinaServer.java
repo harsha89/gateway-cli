@@ -16,11 +16,12 @@
 
 package org.wso2.apimgt.gateway.codegen.model;
 
+import io.swagger.models.Swagger;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.servers.ServerVariable;
 import io.swagger.v3.oas.models.servers.ServerVariables;
-import org.wso2.apimgt.gateway.codegen.exception.BallerinaOpenApiException;
+import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -42,15 +43,15 @@ public class BallerinaServer implements BallerinaSwaggerObject<BallerinaServer, 
 
     /**
      * Builds a {@code BallerinaServer} instance from a {@link Server} instance.
-     * If default server definition was found result of {@link BallerinaOpenApi#getDefaultValue()}
+     * If default server definition was found result of {@link BallerinaService#getDefaultValue()}
      * will be set as the server.
      *
      * @param server Open Api server definition
      * @return Parsed version of {@link Server} as a {@link BallerinaServer}
-     * @throws BallerinaOpenApiException
+     * @throws BallerinaServiceGenException
      */
     @Override
-    public BallerinaServer buildContext(Server server) throws BallerinaOpenApiException {
+    public BallerinaServer buildContext(Server server) throws BallerinaServiceGenException {
         this.server = server;
 
         // OAS spec default for empty server definition is object with url as "/".
@@ -75,14 +76,14 @@ public class BallerinaServer implements BallerinaSwaggerObject<BallerinaServer, 
                 this.port = this.port == -1 ? HTTP_PORT : this.port;
             }
         } catch (MalformedURLException e) {
-            throw new BallerinaOpenApiException("Failed to read endpoint details of the server: " + server.getUrl(), e);
+            throw new BallerinaServiceGenException("Failed to read endpoint details of the server: " + server.getUrl(), e);
         }
 
         return this;
     }
 
     @Override
-    public BallerinaServer buildContext(Server server, OpenAPI openAPI) throws BallerinaOpenApiException {
+    public BallerinaServer buildContext(Server server, Swagger swagger) throws BallerinaServiceGenException {
         return buildContext(server);
     }
 

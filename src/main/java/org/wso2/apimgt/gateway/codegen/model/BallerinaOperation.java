@@ -16,24 +16,16 @@
 
 package org.wso2.apimgt.gateway.codegen.model;
 
-import io.swagger.v3.oas.models.ExternalDocumentation;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.callbacks.Callback;
-import io.swagger.v3.oas.models.parameters.Parameter;
-import io.swagger.v3.oas.models.parameters.RequestBody;
-import io.swagger.v3.oas.models.responses.ApiResponse;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
-import org.wso2.apimgt.gateway.codegen.exception.BallerinaOpenApiException;
+import io.swagger.models.ExternalDocs;
+import io.swagger.models.Operation;
+import io.swagger.models.Swagger;
+import io.swagger.models.parameters.Parameter;
+import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Wraps the {@link Operation} from swagger models to provide iterable child models.
@@ -44,26 +36,17 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
     private List<String> tags;
     private String summary;
     private String description;
-    private ExternalDocumentation externalDocs;
+    private ExternalDocs externalDocs;
     private String operationId;
     private List<BallerinaParameter> parameters;
-    private RequestBody requestBody;
-    private Set<Map.Entry<String, ApiResponse>> responses;
-    private Set<Map.Entry<String, Callback>> callbacks;
-    private List<SecurityRequirement> security;
     private List<String> methods;
 
     // Not static since handlebars can't see static variables
     private final List<String> allMethods =
             Arrays.asList("HEAD", "OPTIONS", "PATCH", "DELETE", "POST", "PUT", "GET");
 
-    public BallerinaOperation() {
-        this.responses = new LinkedHashSet<>();
-        this.callbacks = new LinkedHashSet<>();
-    }
-
     @Override
-    public BallerinaOperation buildContext(Operation operation, OpenAPI openAPI) throws BallerinaOpenApiException {
+    public BallerinaOperation buildContext(io.swagger.models.Operation operation, Swagger swagger) throws BallerinaServiceGenException {
         if (operation == null) {
             return getDefaultValue();
         }
@@ -75,23 +58,12 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
         this.summary = operation.getSummary();
         this.description = operation.getDescription();
         this.externalDocs = operation.getExternalDocs();
-        this.requestBody = operation.getRequestBody();
-        this.security = operation.getSecurity();
-
         this.parameters = new ArrayList<>();
         this.methods = null;
 
-        if (operation.getResponses() != null) {
-            operation.getResponses()
-                    .forEach((name, response) -> responses.add(new AbstractMap.SimpleEntry<>(name, response)));
-        }
-        if (operation.getCallbacks() != null) {
-            operation.getCallbacks()
-                    .forEach((name, callback) -> callbacks.add(new AbstractMap.SimpleEntry<>(name, callback)));
-        }
         if (operation.getParameters() != null) {
             for (Parameter parameter : operation.getParameters()) {
-                this.parameters.add(new BallerinaParameter().buildContext(parameter, openAPI));
+                this.parameters.add(new BallerinaParameter().buildContext(parameter, swagger));
             }
         }
 
@@ -99,7 +71,7 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
     }
 
     @Override
-    public BallerinaOperation buildContext(Operation operation) throws BallerinaOpenApiException {
+    public BallerinaOperation buildContext(Operation operation) throws BallerinaServiceGenException {
         return buildContext(operation, null);
     }
 
@@ -166,32 +138,12 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
         return description;
     }
 
-    public ExternalDocumentation getExternalDocs() {
-        return externalDocs;
-    }
-
     public String getOperationId() {
         return operationId;
     }
 
     public List<BallerinaParameter> getParameters() {
         return parameters;
-    }
-
-    public RequestBody getRequestBody() {
-        return requestBody;
-    }
-
-    public Set<Map.Entry<String, ApiResponse>> getResponses() {
-        return responses;
-    }
-
-    public Set<Map.Entry<String, Callback>> getCallbacks() {
-        return callbacks;
-    }
-
-    public List<SecurityRequirement> getSecurity() {
-        return security;
     }
 
     public void setOperationId(String operationId) {
@@ -204,5 +156,13 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
 
     public List<String> getAllMethods() {
         return allMethods;
+    }
+
+    public ExternalDocs getExternalDocs() {
+        return externalDocs;
+    }
+
+    public void setExternalDocs(ExternalDocs externalDocs) {
+        this.externalDocs = externalDocs;
     }
 }

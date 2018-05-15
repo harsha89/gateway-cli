@@ -19,6 +19,7 @@ public class APIServiceImpl implements APIService{
     public APIDTO getAPI(String id, String token) {
         URL url;
         HttpsURLConnection urlConn = null;
+        APIDTO apidto = null;
         //calling token endpoint
         try {
             String urlStr = "https://localhost:9443/api/am/publisher/v0.11/apis/" + id;
@@ -35,7 +36,7 @@ public class APIServiceImpl implements APIService{
                 System.out.println(responseStr);
                 System.out.println("OOOOOOOOOOOOOOOOOOOOOOOO");
                 //convert json string to object
-                APIDTO apidto = mapper.readValue(responseStr, APIDTO.class);
+                apidto = mapper.readValue(responseStr, APIDTO.class);
                 System.out.println(apidto.toString());
             } else {
                 throw new RuntimeException("Error occurred while getting token. Status code: " + responseCode);
@@ -48,7 +49,7 @@ public class APIServiceImpl implements APIService{
                 urlConn.disconnect();
             }
         }
-        return null;
+        return apidto;
     }
 
     private static String getResponseString(InputStream input) throws IOException {
