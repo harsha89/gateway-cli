@@ -1,8 +1,8 @@
 package org.wso2.apimgt.gateway.codegen.service;
 
-import org.wso2.apimgt.gateway.codegen.service.bean.APIDTO;
+import org.wso2.apimgt.gateway.codegen.service.bean.API;
 
 public interface APIService {
 
-    APIDTO getAPI(String id, String token);
+    API getAPI(String id, String token);
 }

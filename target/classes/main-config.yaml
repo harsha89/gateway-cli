@@ -1,8 +1,8 @@
 clientConfig:
   httpRequestTimeout: 1000000
 tokenConfig:
-  clientId:
-  clientSecret:
+  clientId: GDZO9Uk8v4nZZvPRZMdjrXHU38ga
+  clientSecret: 4bk3IvVg6niTEv25yqHS3bfYqbca
   publisherEndpoint: https://localhost:9443/api/am/publisher/v1.0
   registrationEndpoint: https://localhost:9443/client-registration/v0.11/register
   tokenEndpoint: https://localhost:9443/oauth2/token

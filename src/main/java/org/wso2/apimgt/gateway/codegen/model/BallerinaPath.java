@@ -21,6 +21,7 @@ import io.swagger.models.Swagger;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
+import org.wso2.apimgt.gateway.codegen.service.bean.API;
 
 import java.util.AbstractMap;
 import java.util.LinkedHashSet;
@@ -41,51 +42,44 @@ public class BallerinaPath implements BallerinaSwaggerObject<BallerinaPath, Path
     }
 
     @Override
-    public BallerinaPath buildContext(Path item, Swagger swagger) throws BallerinaServiceGenException {
+    public BallerinaPath buildContext(Path item, API api) throws BallerinaServiceGenException {
         Map.Entry<String, BallerinaOperation> entry;
         BallerinaOperation operation;
-
-        if (item.getVendorExtensions() != null && item.getVendorExtensions().size() > 0) {
-            for (Map.Entry<String, Object> xEntry: item.getVendorExtensions().entrySet()) {
-                resolveExtension(xEntry);
-            }
-            return this;
-        }
 
         // Swagger PathItem object doesn't provide a iterable structure for operations
         // Therefore we have to manually check if each http verb exists
         if (item.getGet() != null) {
-            operation = new BallerinaOperation().buildContext(item.getGet(), swagger);
+            operation = new BallerinaOperation().buildContext(item.getGet(), api);
             entry = new AbstractMap.SimpleEntry<>("get", operation);
             operations.add(entry);
         }
         if (item.getPut() != null) {
-            operation = new BallerinaOperation().buildContext(item.getPut(), swagger);
+            operation = new BallerinaOperation().buildContext(item.getPut(), api);
             entry = new AbstractMap.SimpleEntry<>("put", operation);
             operations.add(entry);
         }
         if (item.getPost() != null) {
-            operation = new BallerinaOperation().buildContext(item.getPost(), swagger);
+            operation = new BallerinaOperation().buildContext(item.getPost(), api);
             entry = new AbstractMap.SimpleEntry<>("post", operation);
             operations.add(entry);
         }
         if (item.getDelete() != null) {
-            operation = new BallerinaOperation().buildContext(item.getDelete(), swagger);
+            operation = new BallerinaOperation().buildContext(item.getDelete(), api);
             entry = new AbstractMap.SimpleEntry<>("delete", operation);
             operations.add(entry);
         }
         if (item.getOptions() != null) {
-            operation = new BallerinaOperation().buildContext(item.getOptions(), swagger);
+            operation = new BallerinaOperation().buildContext(item.getOptions(), api);
             entry = new AbstractMap.SimpleEntry<>("options", operation);
             operations.add(entry);
         }
         if (item.getHead() != null) {
-            operation = new BallerinaOperation().buildContext(item.getHead(), swagger);
+            operation = new BallerinaOperation().buildContext(item.getHead(), api);
             entry = new AbstractMap.SimpleEntry<>("head", operation);
             operations.add(entry);
         }
         if (item.getPatch() != null) {
-            operation = new BallerinaOperation().buildContext(item.getPatch(), swagger);
+            operation = new BallerinaOperation().buildContext(item.getPatch(), api);
             entry = new AbstractMap.SimpleEntry<>("patch", operation);
             operations.add(entry);
         }

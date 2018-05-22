@@ -33,7 +33,7 @@ import org.wso2.apimgt.gateway.codegen.exception.ConfigParserException;
 import org.wso2.apimgt.gateway.codegen.exception.GatewayCliLauncherException;
 import org.wso2.apimgt.gateway.codegen.service.APIService;
 import org.wso2.apimgt.gateway.codegen.service.APIServiceImpl;
-import org.wso2.apimgt.gateway.codegen.service.bean.APIDTO;
+import org.wso2.apimgt.gateway.codegen.service.bean.API;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagementImpl;
 
 import java.io.IOException;
@@ -73,9 +73,9 @@ public class Main {
             String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(), config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
             System.out.println(accessToken);
             APIService apiService = new APIServiceImpl();
-            APIDTO apidto = apiService.getAPI("59fff422-e12c-4814-ac16-33a000d3f486", accessToken);
+            API API = apiService.getAPI("59fff422-e12c-4814-ac16-33a000d3f486", accessToken);
             CodeGenerator codeGenerator = new CodeGenerator();
-            codeGenerator.generate("/home/harsha/Downloads/gentest/gen", apidto);
+            codeGenerator.generate("/home/harsha/Downloads/gentest/gen", API);
         } catch (GatewayCliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);

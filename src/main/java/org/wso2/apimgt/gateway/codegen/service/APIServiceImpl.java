@@ -1,12 +1,9 @@
 package org.wso2.apimgt.gateway.codegen.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.wso2.apimgt.gateway.codegen.service.bean.APIDTO;
-import org.wso2.apimgt.gateway.codegen.token.TokenManagementConstants;
+import org.wso2.apimgt.gateway.codegen.service.bean.API;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.xml.bind.DatatypeConverter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,10 +13,10 @@ import java.nio.charset.StandardCharsets;
 
 public class APIServiceImpl implements APIService{
 
-    public APIDTO getAPI(String id, String token) {
+    public API getAPI(String id, String token) {
         URL url;
         HttpsURLConnection urlConn = null;
-        APIDTO apidto = null;
+        API api = null;
         //calling token endpoint
         try {
             String urlStr = "https://localhost:9443/api/am/publisher/v0.11/apis/" + id;
@@ -36,8 +33,7 @@ public class APIServiceImpl implements APIService{
                 System.out.println(responseStr);
                 System.out.println("OOOOOOOOOOOOOOOOOOOOOOOO");
                 //convert json string to object
-                apidto = mapper.readValue(responseStr, APIDTO.class);
-                System.out.println(apidto.toString());
+                api = mapper.readValue(responseStr, API.class);
             } else {
                 throw new RuntimeException("Error occurred while getting token. Status code: " + responseCode);
             }
@@ -49,7 +45,7 @@ public class APIServiceImpl implements APIService{
                 urlConn.disconnect();
             }
         }
-        return apidto;
+        return api;
     }
 
     private static String getResponseString(InputStream input) throws IOException {

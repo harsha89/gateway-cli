@@ -3,11 +3,17 @@ import ballerina/http;
 import ballerina/swagger;
 import wso2/gateway;
 
-{{#servers}}endpoint http:Listener ep{{@index}} { {{#host}}
-    host: "{{host}}",{{/host}}
-    port: {{port}}
+endpoint gateway:APIGatewaySecureListener apiSecureListener {
 };
-{{/servers}}
+
+endpoint gateway:APIGatewayListener apiListener {
+};
+
+endpoint http:Client {{qualifiedServiceName}}_EP {
+    url: "{{endpointConfig.prodEndpoints.0.endpointUrl}}"
+};
+
+
 @swagger:ServiceInfo { {{#info}}
     title: "{{title}}"{{#description}},
     description: "{{description}}"{{/description}},
@@ -23,10 +29,16 @@ import wso2/gateway;
         {{>security}}{{/security}}
     ]{{/if}}
 }
+
 @http:ServiceConfig {
     basePath: "{{servers.0.basePath}}"{{!-- {{only one base path is allowed for all endpoints}} --}}
+    authConfig:{
+        authProviders:["oauth2"],
+        authentication:{enabled:true}
+    }
 }
-service {{cut info.title " "}} bind {{#servers}}ep{{@index}}{{#unless @last}}, {{/unless}}{{/servers}} {
+
+service {{cut qualifiedServiceName " "}} bind apiListener,apiSecureListener {
 {{#paths}}{{#value}}{{#operations}}{{#value}}
     @swagger:ResourceInfo {
         summary: "{{summary}}"{{#if tags}},
@@ -44,15 +56,22 @@ service {{cut info.title " "}} bind {{#servers}}ep{{@index}}{{#unless @last}}, {
             }{{#unless @last}},{{/unless}}{{/parameters}}
         ]{{/if}}
     }
-    @http:ResourceConfig { {{#equals key "multi"}}{{#if methods}}
-        methods:[{{#methods}}"{{.}}"{{#unless @last}}, {{/unless}}{{/methods}}],{{/if}}{{else}}
-        methods:["{{upper key}}"],{{/equals}}
-        path:"{{../../key}}"
-    }{{#deprecated}}
-    deprecated {}{{/deprecated}}
-    {{operationId}} (endpoint outboundEp, http:Request req{{#parameters}}{{>pathParams}}{{/parameters}}) {
-        http:Response res = {{operationId}}(req{{#parameters}}{{#equals in "path"}}, {{name}}{{/equals}}{{/parameters}});
-        outboundEp->respond(res) but { error e => log:printError("Error while responding", err = e) };
+    @http:ResourceConfig {
+        methods:["{{upper key}}"],
+        path:"{{../../key}}",
+        authConfig:{
+            authProviders:["oauth2"],
+            authentication:{enabled:true}
+        }
     }
+    @gateway:RateLimit{policy : "{{resourceTier}}"}
+    {{operationId}} (endpoint outboundEp, http:Request req{{#parameters}}{{>pathParams}}{{/parameters}}) {
+            var result = {{qualifiedServiceName}}_EP -> {{key}}("{{../../key}}", request = req);
+            match result {
+                http:Response clientResponse => {
+                    _ = conn -> respond(clientResponse);
+                }
+                any|() => {}
+            }
 {{/value}}{{/operations}}{{/value}}{{/paths}}
 }

@@ -18,14 +18,15 @@ package org.wso2.apimgt.gateway.codegen.model;
 
 import io.swagger.models.ExternalDocs;
 import io.swagger.models.Operation;
-import io.swagger.models.Swagger;
 import io.swagger.models.parameters.Parameter;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
+import org.wso2.apimgt.gateway.codegen.service.bean.API;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Wraps the {@link Operation} from swagger models to provide iterable child models.
@@ -36,6 +37,7 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
     private List<String> tags;
     private String summary;
     private String description;
+    private String resourceTier;
     private ExternalDocs externalDocs;
     private String operationId;
     private List<BallerinaParameter> parameters;
@@ -46,7 +48,7 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
             Arrays.asList("HEAD", "OPTIONS", "PATCH", "DELETE", "POST", "PUT", "GET");
 
     @Override
-    public BallerinaOperation buildContext(io.swagger.models.Operation operation, Swagger swagger) throws BallerinaServiceGenException {
+    public BallerinaOperation buildContext(Operation operation, API api) throws BallerinaServiceGenException {
         if (operation == null) {
             return getDefaultValue();
         }
@@ -60,10 +62,15 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
         this.externalDocs = operation.getExternalDocs();
         this.parameters = new ArrayList<>();
         this.methods = null;
+        Map<String, Object> extension =  operation.getVendorExtensions();
+        Object resourceTier = extension.get("x-throttling-tier");
+        if (resourceTier != null) {
+            this.resourceTier = resourceTier.toString();
+        }
 
         if (operation.getParameters() != null) {
             for (Parameter parameter : operation.getParameters()) {
-                this.parameters.add(new BallerinaParameter().buildContext(parameter, swagger));
+                this.parameters.add(new BallerinaParameter().buildContext(parameter, api));
             }
         }
 
@@ -90,6 +97,7 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
         Object summary = extension.get("summary");
         Object description = extension.get("description");
         Object xMethodsObj = extension.get("x-METHODS");
+        Object resourceTier = extension.get("x-throttling-tier");
         this.parameters = new ArrayList<>();
 
         if (operationId != null) {
@@ -108,6 +116,9 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
         }
         if (xMethodsObj != null && (xMethodsObj instanceof ArrayList)) {
             this.methods =  (ArrayList) xMethodsObj;
+        }
+        if (resourceTier != null) {
+            this.resourceTier = resourceTier.toString();
         }
 
         return this;
@@ -164,5 +175,13 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
 
     public void setExternalDocs(ExternalDocs externalDocs) {
         this.externalDocs = externalDocs;
+    }
+
+    public String getResourceTier() {
+        return resourceTier;
+    }
+
+    public void setResourceTier(String resourceTier) {
+        this.resourceTier = resourceTier;
     }
 }

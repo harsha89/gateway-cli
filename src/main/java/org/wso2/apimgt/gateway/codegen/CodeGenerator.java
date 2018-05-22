@@ -31,7 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.codegen.model.BallerinaService;
 import org.wso2.apimgt.gateway.codegen.model.GenSrcFile;
-import org.wso2.apimgt.gateway.codegen.service.bean.APIDTO;
+import org.wso2.apimgt.gateway.codegen.service.bean.API;
 import org.wso2.apimgt.gateway.codegen.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.codegen.utils.GeneratorConstants;
 
@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -61,11 +60,11 @@ public class CodeGenerator {
      * @throws IOException               when file operations fail
      * @throws BallerinaServiceGenException when code generator fails
      */
-    public void generate(String outPath, APIDTO apidto)
+    public void generate(String outPath, API API)
             throws IOException, BallerinaServiceGenException {
         Path srcPath = CodegenUtils.getSourcePath(srcPackage, outPath);
         Path implPath = CodegenUtils.getImplPath(srcPackage, srcPath);
-        List<GenSrcFile> genFiles = generate(apidto);
+        List<GenSrcFile> genFiles = generate(API);
         writeGeneratedSources(genFiles, srcPath, implPath);
     }
 
@@ -79,11 +78,11 @@ public class CodeGenerator {
      * @throws IOException               when file operations fail
      * @throws BallerinaServiceGenException when open api context building fail
      */
-    public List<GenSrcFile> generate(APIDTO api)
+    public List<GenSrcFile> generate(API api)
             throws IOException, BallerinaServiceGenException {
         SwaggerParser parser = new SwaggerParser();
         Swagger swagger = parser.parse(api.getApiDefinition());
-        BallerinaService definitionContext = new BallerinaService().buildContext(swagger).srcPackage(srcPackage)
+        BallerinaService definitionContext = new BallerinaService().buildContext(swagger, api).srcPackage(srcPackage)
                 .modelPackage(srcPackage);
         List<GenSrcFile> sourceFiles;
         sourceFiles = generateMock(definitionContext);
@@ -179,34 +178,6 @@ public class CodeGenerator {
     }
 
     /**
-     * Generate code for ballerina client.
-     *
-     * @param context model context to be used by the templates
-     * @return generated source files as a list of {@link GenSrcFile}
-     * @throws IOException when code generation with specified templates fails
-     */
-    private List<GenSrcFile> generateClient(BallerinaService context) throws IOException {
-        if (srcPackage == null || srcPackage.isEmpty()) {
-            srcPackage = GeneratorConstants.DEFAULT_CLIENT_PKG;
-        }
-
-        List<GenSrcFile> sourceFiles = new ArrayList<>();
-        String srcFile = context.getInfo().getTitle().toLowerCase(Locale.ENGLISH).replaceAll(" ", "_") + ".bal";
-
-        String mainContent = getContent(context, GeneratorConstants.DEFAULT_CLIENT_DIR,
-                GeneratorConstants.CLIENT_TEMPLATE_NAME);
-        sourceFiles.add(new GenSrcFile(GenSrcFile.GenFileType.GEN_SRC, srcPackage, srcFile, mainContent));
-
-        // Generate ballerina structs
-        String schemaContent = getContent(context, GeneratorConstants.DEFAULT_MODEL_DIR,
-                GeneratorConstants.SCHEMA_TEMPLATE_NAME);
-        sourceFiles.add(new GenSrcFile(GenSrcFile.GenFileType.MODEL_SRC, srcPackage, GeneratorConstants.SCHEMA_FILE_NAME,
-                schemaContent));
-
-        return sourceFiles;
-    }
-
-    /**
      * Generate code for mock ballerina service.
      *
      * @param context model context to be used by the templates
@@ -215,29 +186,16 @@ public class CodeGenerator {
      */
     private List<GenSrcFile> generateMock(BallerinaService context) throws IOException {
         if (srcPackage == null || srcPackage.isEmpty()) {
-            srcPackage = GeneratorConstants.DEFAULT_MOCK_PKG;
+            srcPackage = GeneratorConstants.DEFAULT_SERVICE_PKG;
         }
 
         List<GenSrcFile> sourceFiles = new ArrayList<>();
         String concatTitle = context.getInfo().getTitle().toLowerCase(Locale.ENGLISH).replaceAll(" ", "_");
         String srcFile = concatTitle + ".bal";
-        String implFile = concatTitle + "_impl.bal";
 
-        String mainContent = getContent(context, GeneratorConstants.DEFAULT_MOCK_DIR,
-                GeneratorConstants.MOCK_TEMPLATE_NAME);
+        String mainContent = getContent(context, GeneratorConstants.DEFAULT_SERVICE_DIR,
+                GeneratorConstants.SERVICE_TEMPLATE_NAME);
         sourceFiles.add(new GenSrcFile(GenSrcFile.GenFileType.GEN_SRC, srcPackage, srcFile, mainContent));
-
-        // Generate ballerina structs
-        String schemaContent = getContent(context, GeneratorConstants.DEFAULT_MODEL_DIR,
-                GeneratorConstants.SCHEMA_TEMPLATE_NAME);
-        sourceFiles.add(new GenSrcFile(GenSrcFile.GenFileType.MODEL_SRC, srcPackage, GeneratorConstants.SCHEMA_FILE_NAME,
-                schemaContent));
-
-        // Generate resource implementation source
-        String implContent = getContent(context, GeneratorConstants.DEFAULT_MOCK_DIR,
-                GeneratorConstants.IMPL_TEMPLATE_NAME);
-        sourceFiles.add(new GenSrcFile(GenSrcFile.GenFileType.IMPL_SRC, srcPackage, implFile, implContent));
-
 
         return sourceFiles;
     }

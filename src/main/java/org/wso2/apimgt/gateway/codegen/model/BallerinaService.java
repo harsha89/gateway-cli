@@ -16,17 +16,24 @@
 
 package org.wso2.apimgt.gateway.codegen.model;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.models.ExternalDocs;
 import io.swagger.models.Info;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 import io.swagger.models.Tag;
-import io.swagger.v3.oas.models.servers.Server;
 import org.apache.commons.lang3.StringUtils;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
+import org.wso2.apimgt.gateway.codegen.service.bean.API;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +44,12 @@ import java.util.Set;
  * <p>This class can be used to push additional context variables for handlebars</p>
  */
 public class BallerinaService implements BallerinaSwaggerObject<BallerinaService, Swagger> {
+    private String name;
+    private API api;
+    private EndpointConfig endpointConfig;
     private String srcPackage;
     private String modelPackage;
+    private String qualifiedServiceName;
     private Info info = null;
     private ExternalDocs externalDocs = null;
     private List<BallerinaServer> servers = null;
@@ -66,7 +77,72 @@ public class BallerinaService implements BallerinaSwaggerObject<BallerinaService
     }
 
     @Override
-    public BallerinaService buildContext(Swagger definition, Swagger swagger) throws BallerinaServiceGenException {
+    public BallerinaService buildContext(Swagger definition, API api) throws BallerinaServiceGenException {
+        this.name = trim(api.getName());
+        this.api = api;
+        String endpointConfig = api.getEndpointConfig();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = null;
+        try {
+            rootNode = mapper.readTree(endpointConfig);
+            EndpointConfig endpointConf = new EndpointConfig();
+            this.qualifiedServiceName = trim(api.getName()) + "_" + replaceAllNonAlphaNumeric(api.getVersion());
+            String endpointType = rootNode.path("endpoint_type").asText();
+            endpointConf.setEndpointType(endpointType);
+
+            if ("http".equalsIgnoreCase(endpointType) || "failover".equalsIgnoreCase(endpointType)) {
+                JsonNode prodEndpointNode = rootNode.get("production_endpoints");
+                Endpoint prod = new Endpoint();
+                prod.setEndpointUrl(prodEndpointNode.get("url").asText());
+                endpointConf.addProdEndpoint(prod);
+
+                JsonNode sandEndpointNode = rootNode.get("sandbox_endpoints");
+                Endpoint sandbox = new Endpoint();
+                sandbox.setEndpointUrl(sandEndpointNode.get("url").asText());
+                endpointConf.addSandEndpoint(sandbox);
+
+                if ("failover".equalsIgnoreCase(endpointType)) {
+                    JsonNode prodFailoverEndpointNode = rootNode.withArray("production_failovers");
+                    Iterator<JsonNode> prodFailoverEndointIterator = prodFailoverEndpointNode.iterator();
+                    while (prodFailoverEndointIterator.hasNext()) {
+                        JsonNode node = prodFailoverEndointIterator.next();
+                        Endpoint endpoint = new Endpoint();
+                        endpoint.setEndpointUrl(node.get("url").asText());
+                        endpointConf.addProdFailoverEndpoint(endpoint);
+                    }
+
+                    JsonNode sandFailoverEndpointNode = rootNode.withArray("sandbox_failovers");
+                    Iterator<JsonNode> sandboxFailoverEndointIterator = sandFailoverEndpointNode.iterator();
+                    while (sandboxFailoverEndointIterator.hasNext()) {
+                        JsonNode node = sandboxFailoverEndointIterator.next();
+                        Endpoint endpoint = new Endpoint();
+                        endpoint.setEndpointUrl(node.get("url").asText());
+                        endpointConf.addSandFailoverEndpoint(endpoint);
+                    }
+                }
+            } else if ("load_balance".equalsIgnoreCase(endpointType)) {
+                JsonNode prodEndoints = rootNode.withArray("production_endpoints");
+                Iterator<JsonNode> prodEndointIterator = prodEndoints.iterator();
+                while (prodEndointIterator.hasNext()) {
+                    JsonNode node = prodEndointIterator.next();
+                    Endpoint endpoint = new Endpoint();
+                    endpoint.setEndpointUrl(node.get("url").asText());
+                    endpointConf.addProdEndpoint(endpoint);
+                }
+
+                JsonNode sandboxEndpoints = rootNode.withArray("sandbox_endpoints");
+                Iterator<JsonNode> sandboxEndointIterator = sandboxEndpoints.iterator();
+                while (sandboxEndointIterator.hasNext()) {
+                    JsonNode node = sandboxEndointIterator.next();
+                    Endpoint endpoint = new Endpoint();
+                    endpoint.setEndpointUrl(node.get("url").asText());
+                    endpointConf.addSandEndpoint(endpoint);
+                }
+            }
+            this.endpointConfig = endpointConf;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return buildContext(definition);
     }
 
@@ -91,11 +167,11 @@ public class BallerinaService implements BallerinaSwaggerObject<BallerinaService
         this.paths = new LinkedHashSet<>();
         Map<String, Path> pathList = swagger.getPaths();
         for (Map.Entry<String, Path> path : pathList.entrySet()) {
-            BallerinaPath balPath = new BallerinaPath().buildContext(path.getValue(), swagger);
+            BallerinaPath balPath = new BallerinaPath().buildContext(path.getValue(), this.api);
             balPath.getOperations().forEach(operation -> {
                 if (operation.getValue().getOperationId() == null) {
                     String pathName = path.getKey().substring(1); // need to drop '/' prefix from the key, ex:'/path'
-                    String operationId = operation.getKey() + StringUtils.capitalize(pathName);
+                    String operationId = operation.getKey() + trim(StringUtils.capitalize(pathName));
                     operation.getValue().setOperationId(operationId);
                 }
             });
@@ -156,5 +232,53 @@ public class BallerinaService implements BallerinaSwaggerObject<BallerinaService
 
     public Set<Map.Entry<String, BallerinaPath>> getPaths() {
         return paths;
+    }
+
+
+    private String trim(String key) {
+        if (key == null) {
+            return null;
+        }
+        key = key.replaceAll(" ", "_");
+        key = key.replaceAll("/", "_");
+        key = key.replaceAll("\\{", "_");
+        key = key.replaceAll("}", "_");
+        return key;
+    }
+
+    private String replaceAllNonAlphaNumeric(String value) {
+        return value.replaceAll("[^a-zA-Z0-9]+","_");
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public EndpointConfig getEndpointConfig() {
+        return endpointConfig;
+    }
+
+    public void setEndpointConfig(EndpointConfig endpointConfig) {
+        this.endpointConfig = endpointConfig;
+    }
+
+    public API getApi() {
+        return api;
+    }
+
+    public void setApi(API api) {
+        this.api = api;
+    }
+
+    public String getQualifiedServiceName() {
+        return qualifiedServiceName;
+    }
+
+    public void setQualifiedServiceName(String qualifiedServiceName) {
+        this.qualifiedServiceName = qualifiedServiceName;
     }
 }

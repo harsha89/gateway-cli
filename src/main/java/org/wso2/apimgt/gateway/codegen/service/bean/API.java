@@ -21,7 +21,7 @@ import javax.validation.constraints.NotNull;
 
 
 @ApiModel(description = "")
-public class APIDTO  {
+public class API {
 
 
 
@@ -559,7 +559,7 @@ public class APIDTO  {
   @Override
   public String toString()  {
     StringBuilder sb = new StringBuilder();
-    sb.append("class APIDTO {\n");
+    sb.append("class API {\n");
 
     sb.append("  id: ").append(id).append("\n");
     sb.append("  name: ").append(name).append("\n");

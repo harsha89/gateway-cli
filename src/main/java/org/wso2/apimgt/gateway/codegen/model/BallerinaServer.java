@@ -22,6 +22,7 @@ import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.servers.ServerVariable;
 import io.swagger.v3.oas.models.servers.ServerVariables;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
+import org.wso2.apimgt.gateway.codegen.service.bean.API;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -83,7 +84,7 @@ public class BallerinaServer implements BallerinaSwaggerObject<BallerinaServer, 
     }
 
     @Override
-    public BallerinaServer buildContext(Server server, Swagger swagger) throws BallerinaServiceGenException {
+    public BallerinaServer buildContext(Server server, API api) throws BallerinaServiceGenException {
         return buildContext(server);
     }
 
