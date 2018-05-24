@@ -20,7 +20,6 @@ package org.wso2.apimgt.gateway.codegen.cmd;
 public class GatewayCliCommands {
 
     public static final String HELP = "help";
-    public static final String VERSION = "version";
     public static final String DEFAULT = "default";
     public static final String SETUP = "setup";
 }

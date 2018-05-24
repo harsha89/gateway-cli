@@ -31,14 +31,15 @@ endpoint http:Client {{qualifiedServiceName}}_EP {
 }
 
 @http:ServiceConfig {
-    basePath: "{{servers.0.basePath}}"{{!-- {{only one base path is allowed for all endpoints}} --}}
+    basePath: "{{api.context}}/{{api.version}}"{{!-- {{only one base path is allowed for all endpoints}} --}}
     authConfig:{
         authProviders:["oauth2"],
         authentication:{enabled:true}
     }
 }
 
-service {{cut qualifiedServiceName " "}} bind apiListener,apiSecureListener {
+@gateway:Version { apiVersion: "{{api.version}}" }
+service<http:Service> {{cut qualifiedServiceName " "}} bind apiListener,apiSecureListener {
 {{#paths}}{{#value}}{{#operations}}{{#value}}
     @swagger:ResourceInfo {
         summary: "{{summary}}"{{#if tags}},
@@ -69,9 +70,10 @@ service {{cut qualifiedServiceName " "}} bind apiListener,apiSecureListener {
             var result = {{qualifiedServiceName}}_EP -> {{key}}("{{../../key}}", request = req);
             match result {
                 http:Response clientResponse => {
-                    _ = conn -> respond(clientResponse);
+                    _ = outboundEp -> respond(clientResponse);
                 }
                 any|() => {}
             }
+    }
 {{/value}}{{/operations}}{{/value}}{{/paths}}
 }

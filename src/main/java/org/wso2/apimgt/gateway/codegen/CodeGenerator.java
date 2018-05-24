@@ -60,11 +60,11 @@ public class CodeGenerator {
      * @throws IOException               when file operations fail
      * @throws BallerinaServiceGenException when code generator fails
      */
-    public void generate(String outPath, API API)
+    public void generate(String outPath, List<API> apis)
             throws IOException, BallerinaServiceGenException {
         Path srcPath = CodegenUtils.getSourcePath(srcPackage, outPath);
         Path implPath = CodegenUtils.getImplPath(srcPackage, srcPath);
-        List<GenSrcFile> genFiles = generate(API);
+        List<GenSrcFile> genFiles = generate(apis.get(0));
         writeGeneratedSources(genFiles, srcPath, implPath);
     }
 

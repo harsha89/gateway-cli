@@ -92,15 +92,6 @@ public class BallerinaPath implements BallerinaSwaggerObject<BallerinaPath, Path
         return buildContext(item, null);
     }
 
-    private void resolveExtension(Map.Entry<String, Object> xEntry) {
-        // currently we only support x-MULTI extension
-        if ("x-MULTI".equals(xEntry.getKey())) {
-            BallerinaOperation operation = new BallerinaOperation().buildXContext(xEntry.getValue());
-            Map.Entry<String, BallerinaOperation> entry = new AbstractMap.SimpleEntry<>("multi", operation);
-            operations.add(entry);
-        }
-    }
-
     @Override
     public BallerinaPath getDefaultValue() {
         return null;

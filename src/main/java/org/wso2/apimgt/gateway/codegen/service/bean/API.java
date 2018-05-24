@@ -1,28 +1,17 @@
 package org.wso2.apimgt.gateway.codegen.service.bean;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.wso2.apimgt.gateway.codegen.service.bean.APIBusinessInformationDTO;
-import org.wso2.apimgt.gateway.codegen.service.bean.APICorsConfigurationDTO;
-import org.wso2.apimgt.gateway.codegen.service.bean.APIEndpointSecurityDTO;
-import org.wso2.apimgt.gateway.codegen.service.bean.APIMaxTpsDTO;
-import org.wso2.apimgt.gateway.codegen.service.bean.SequenceDTO;
-
-import io.swagger.annotations.*;
-import com.fasterxml.jackson.annotation.*;
-
-import javax.validation.constraints.NotNull;
-
-
-
-
-
 @ApiModel(description = "")
 public class API {
-
 
 
   private String id = null;
@@ -134,6 +123,16 @@ public class API {
   private APICorsConfigurationDTO corsConfiguration = null;
 
   private Map<String, String> additionalProperties = new HashMap<>();
+
+  private EndpointConfig endpointConfigRepresentation = null;
+
+  public EndpointConfig getEndpointConfigRepresentation() {
+    return endpointConfigRepresentation;
+  }
+
+  public void setEndpointConfigRepresentation(EndpointConfig endpointConfigRepresentation) {
+    this.endpointConfigRepresentation = endpointConfigRepresentation;
+  }
 
   /**
    * UUID of the api registry artifact\n

@@ -23,6 +23,7 @@ import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.codegen.CodeGenerator;
@@ -30,19 +31,18 @@ import org.wso2.apimgt.gateway.codegen.config.ConfigYAMLParser;
 import org.wso2.apimgt.gateway.codegen.config.bean.Config;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.codegen.exception.ConfigParserException;
-import org.wso2.apimgt.gateway.codegen.exception.GatewayCliLauncherException;
+import org.wso2.apimgt.gateway.codegen.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.codegen.service.APIService;
 import org.wso2.apimgt.gateway.codegen.service.APIServiceImpl;
 import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.token.TokenManagement;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagementImpl;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 
 /**
  * This class executes the gateway cli program.
@@ -58,25 +58,31 @@ public class Main {
 
     public static void main(String... args) {
         try {
+           /* String ballerinaHome  = System.getProperty(GatewayCliConstants.BALLERINA_HOME);
+            if (StringUtils.isEmpty(ballerinaHome)) {
+                outStream.println("Please set BALLERINA_HOME variable to continue");
+                Runtime.getRuntime().exit(1);
+            }*/
+
+            //String trustoreLocation = ballerinaHome + "";
             Optional<GatewayLauncherCmd> optionalInvokedCmd = getInvokedCmd(args);
             optionalInvokedCmd.ifPresent(GatewayLauncherCmd::execute);
-            System.setProperty("javax.net.ssl.trustStore", "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/client-truststore.jks");
-            System.setProperty("javax.net.ssl.trustStorePassword", "wso2carbon");
             String configPath = "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/main-config.yaml";
             Config config =
                     ConfigYAMLParser.parse(configPath, Config.class);
-            config.getTokenConfig().setClientSecret("dddddddddddddddddddd");
-            ConfigYAMLParser.write(configPath, config, Config.class);
+            System.setProperty("javax.net.ssl.trustStore", "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/client-truststore.jks");
+            System.setProperty("javax.net.ssl.trustStorePassword", "wso2carbon");
             TokenManagementImpl tokenManagement = new TokenManagementImpl();
             GatewayCmdUtils.setConfig(config);
-            tokenManagement.generateClientIdAndSecret();
-            String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(), config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
+            tokenManagement.generateClientIdAndSecret(config);
+            String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(),
+                    config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
             System.out.println(accessToken);
             APIService apiService = new APIServiceImpl();
-            API API = apiService.getAPI("59fff422-e12c-4814-ac16-33a000d3f486", accessToken);
+            List<API> apis = apiService.getApis("59fff422-e12c-4814-ac16-33a000d3f486", accessToken);
             CodeGenerator codeGenerator = new CodeGenerator();
-            codeGenerator.generate("/home/harsha/Downloads/gentest/gen", API);
-        } catch (GatewayCliLauncherException e) {
+            codeGenerator.generate("/home/harsha/Downloads/gentest/gen", apis);
+        } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
         } catch (ConfigParserException e) {
@@ -149,19 +155,6 @@ public class Main {
         outStream.println(usageInfo);
     }
 
-    private static void printVersionInfo() {
-        try (InputStream inputStream = Main.class.getResourceAsStream("/META-INF/launcher.properties")) {
-            Properties properties = new Properties();
-            properties.load(inputStream);
-
-            String version = "Ballerina " + properties.getProperty("ballerina.version") + "\n";
-            outStream.print(version);
-        } catch (Throwable ignore) {
-            // Exception is ignored
-            throw GatewayCmdUtils.createUsageException("version info not available");
-        }
-    }
-
     private static String getMessageForInternalErrors() {
         String errorMsg;
         try {
@@ -211,22 +204,10 @@ public class Main {
         }
 
         @Override
-        public void printLongDesc(StringBuilder out) {
-
-        }
-
-        @Override
-        public void printUsage(StringBuilder out) {
-        }
-
-        @Override
         public void setParentCmdParser(JCommander parentCmdParser) {
             this.parentCmdParser = parentCmdParser;
         }
 
-        @Override
-        public void setSelfCmdParser(JCommander selfCmdParser) {
-        }
     }
 
     /**
@@ -237,29 +218,71 @@ public class Main {
     private static class SetupCmd implements GatewayLauncherCmd {
 
         @Parameter(description = "Command name")
-        private List<String> helpCommands;
+        private List<String> setupCommands;
 
         @Parameter(names = "--java.debug", hidden = true)
         private String javaDebugPort;
 
+        @Parameter(names = {"-u", "--user"}, hidden = true)
+        private String username;
+
+        @Parameter(names = {"-p", "--password"}, hidden = true)
+        private String password;
+
+        @Parameter(names = {"-l", "--label"}, hidden = true)
+        private String label;
+
+        @Parameter(names = {"-o", "--overwrite"}, hidden = true)
+        private boolean overwrite;
+
         private JCommander parentCmdParser;
 
         public void execute() {
-            if (helpCommands == null) {
+            if (setupCommands == null) {
                 printUsageInfo(GatewayCliCommands.SETUP);
                 return;
-
-            } else if (helpCommands.size() > 1) {
+            } else if (setupCommands.size() > 1) {
                 throw GatewayCmdUtils.createUsageException("too many arguments given");
             }
 
-            String userCommand = helpCommands.get(0);
-            if (parentCmdParser.getCommands().get(userCommand) == null) {
-                throw GatewayCmdUtils.createUsageException("unknown help topic `" + userCommand + "`");
+            Config config = GatewayCmdUtils.getConfig();
+            String configuredUser = config.getTokenConfig().getUsername();
+
+            if (StringUtils.isEmpty(configuredUser) && StringUtils.isEmpty(username)) {
+                if ((username = promptForTextInput("Enter Username: ")).trim().isEmpty()) {
+                    if (username.trim().isEmpty()) {
+                        username = promptForTextInput("Username can't be empty; enter secret: ");
+                        if (username.trim().isEmpty()) {
+                            throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty username.");
+                        }
+                    }
+                }
             }
 
-            String commandUsageInfo = GatewayLauncherCmd.getCommandUsageInfo(userCommand);
-            outStream.println(commandUsageInfo);
+            if (StringUtils.isEmpty(username)) {
+                if ((password = promptForTextInput("Enter Password: ")).trim().isEmpty()) {
+                    if (StringUtils.isEmpty(username)) {
+                        password = promptForTextInput("Password can't be empty; enter secret: ");
+                        if (username.trim().isEmpty()) {
+                            throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty username.");
+                        }
+                    }
+                }
+            }
+
+            TokenManagement manager = new TokenManagementImpl();
+
+            String clientId = config.getTokenConfig().getClientId();
+            if (StringUtils.isEmpty(clientId)) {
+                manager.generateClientIdAndSecret(config);
+                clientId = config.getTokenConfig().getClientId();
+            }
+
+            String clientSecret = config.getTokenConfig().getClientSecret();
+            String accessToken = manager.generateAccessToken(username, password.toCharArray(), clientId, clientSecret.toCharArray());
+
+            APIService service = new APIServiceImpl();
+            List<API> apis = service.getApis(label, accessToken);
         }
 
         @Override
@@ -268,21 +291,13 @@ public class Main {
         }
 
         @Override
-        public void printLongDesc(StringBuilder out) {
-
-        }
-
-        @Override
-        public void printUsage(StringBuilder out) {
-        }
-
-        @Override
         public void setParentCmdParser(JCommander parentCmdParser) {
             this.parentCmdParser = parentCmdParser;
         }
 
-        @Override
-        public void setSelfCmdParser(JCommander selfCmdParser) {
+        private String promptForTextInput(String msg) {
+            outStream.println(msg);
+            return new String(System.console().readLine());
         }
     }
 
@@ -295,9 +310,6 @@ public class Main {
         @Parameter(names = { "--help", "-h", "?" }, hidden = true, description = "for more information")
         private boolean helpFlag;
 
-        @Parameter(names = { "--version", "-v" }, hidden = true)
-        private boolean versionFlag;
-
         @Parameter(names = "--java.debug", hidden = true)
         private String javaDebugPort;
 
@@ -305,11 +317,6 @@ public class Main {
         public void execute() {
             if (helpFlag) {
                 printUsageInfo(GatewayCliCommands.HELP);
-                return;
-            }
-
-            if (versionFlag) {
-                printVersionInfo();
                 return;
             }
 
@@ -322,20 +329,7 @@ public class Main {
         }
 
         @Override
-        public void printLongDesc(StringBuilder out) {
-
-        }
-
-        @Override
-        public void printUsage(StringBuilder out) {
-        }
-
-        @Override
         public void setParentCmdParser(JCommander parentCmdParser) {
-        }
-
-        @Override
-        public void setSelfCmdParser(JCommander selfCmdParser) {
         }
     }
 }

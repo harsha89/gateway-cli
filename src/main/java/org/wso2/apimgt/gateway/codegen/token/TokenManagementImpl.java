@@ -62,7 +62,7 @@ public class TokenManagementImpl implements TokenManagement {
     }
 
     @Override
-    public String generateClientIdAndSecret() {
+    public String generateClientIdAndSecret(Config config) {
         URL url;
         HttpURLConnection urlConn = null;
         try {
@@ -76,7 +76,6 @@ public class TokenManagementImpl implements TokenManagement {
             System.out.println(application.toString());
 
             // Calling DCR endpoint
-            Config config = GatewayCmdUtils.getConfig();
             String dcrEndpoint = config.getTokenConfig().getRegistrationEndpoint();
             url = new URL(dcrEndpoint);
             urlConn = (HttpURLConnection) url.openConnection();

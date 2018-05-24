@@ -15,16 +15,8 @@
  *  specific language governing permissions and limitations
  *  under the License.
  */
-package org.wso2.apimgt.gateway.codegen.config.bean;
+package org.wso2.apimgt.gateway.codegen.cmd;
 
-public class ClientConfig {
-    private int httpRequestTimeout;
-
-    public int getHttpRequestTimeout() {
-        return httpRequestTimeout;
-    }
-
-    public void setHttpRequestTimeout(int httpRequestTimeout) {
-        this.httpRequestTimeout = httpRequestTimeout;
-    }
+public class GatewayCliConstants {
+    public static String BALLERINA_HOME = "BALLERINA_HOME";
 }

@@ -1,4 +1,4 @@
-package org.wso2.apimgt.gateway.codegen.model;
+package org.wso2.apimgt.gateway.codegen.service.bean;
 
 import java.util.ArrayList;
 import java.util.List;

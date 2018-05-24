@@ -16,7 +16,6 @@
 
 package org.wso2.apimgt.gateway.codegen.model;
 
-import io.swagger.models.Swagger;
 import io.swagger.models.parameters.Parameter;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.codegen.service.bean.API;

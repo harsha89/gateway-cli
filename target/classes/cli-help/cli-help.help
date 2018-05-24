@@ -20,7 +20,7 @@ DESCRIPTION
          micro-gw [COMMAND] [options]
 
      COMMAND is one of the available commands listed below:
-         setup        Run Ballerina program
+         setup        Generate ballerina program
 
 OPTIONS
      Gateway Cli help takes no command line options

@@ -24,7 +24,6 @@ import org.wso2.apimgt.gateway.codegen.service.bean.API;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -80,48 +79,6 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
     @Override
     public BallerinaOperation buildContext(Operation operation) throws BallerinaServiceGenException {
         return buildContext(operation, null);
-    }
-
-    /**
-     * Build BallerinaOperation with user extension.
-     * Complete BallerinaOperation object will not be built. Only selected
-     * set of attributes are supported.
-     *
-     * @param xObj extension context object
-     * @return BallerinaOperation built with extension details
-     */
-    public BallerinaOperation buildXContext(Object xObj) {
-        LinkedHashMap extension = (LinkedHashMap) xObj;
-        Object operationId = extension.get("operationId");
-        Object tags = extension.get("tags");
-        Object summary = extension.get("summary");
-        Object description = extension.get("description");
-        Object xMethodsObj = extension.get("x-METHODS");
-        Object resourceTier = extension.get("x-throttling-tier");
-        this.parameters = new ArrayList<>();
-
-        if (operationId != null) {
-            // OperationId with spaces will cause trouble in ballerina code.
-            // Replacing it with '_' so that we can identify there was a ' ' when doing bal -> swagger
-            this.operationId = getTrimmedOperationId(operationId.toString());
-        }
-        if (tags != null && tags instanceof ArrayList) {
-            this.tags = (ArrayList<String>) tags;
-        }
-        if (summary != null) {
-            this.summary = summary.toString();
-        }
-        if (description != null) {
-            this.description = description.toString();
-        }
-        if (xMethodsObj != null && (xMethodsObj instanceof ArrayList)) {
-            this.methods =  (ArrayList) xMethodsObj;
-        }
-        if (resourceTier != null) {
-            this.resourceTier = resourceTier.toString();
-        }
-
-        return this;
     }
 
     private String getTrimmedOperationId (String operationId) {

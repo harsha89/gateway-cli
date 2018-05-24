@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  *  WSO2 Inc. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Thrown to indicate that an exception occurred in gateway cli program launcher.
  */
-public class GatewayCliLauncherException extends RuntimeException {
+public class CliLauncherException extends RuntimeException {
     private List<String> detailedMessages = new ArrayList<>();
 
     public void addMessage(String message) {

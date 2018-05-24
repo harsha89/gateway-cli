@@ -2,17 +2,13 @@ NAME
     Gateway Cli - Tool which used to generate the ballerina services from APIs
 
 SYNOPSIS
-    micro-gw [-v|--version|version] [?|-h|--help]
+    micro-gw [?|-h|--help]
 
 DESCRIPTION
      This a cli tool which allow users to generate ballerina service definition
      from the APIs
 
 OPTIONS
-     -v
-     --version
-     version
-          Prints the micro-gw version in use.
 
      ?
      -h
