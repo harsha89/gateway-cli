@@ -6,6 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.wso2.apimgt.gateway.codegen.service.bean.Endpoint;
 import org.wso2.apimgt.gateway.codegen.service.bean.EndpointConfig;
 import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.service.bean.policy.ApplicationThrottlePolicyDTO;
+import org.wso2.apimgt.gateway.codegen.service.bean.policy.ApplicationThrottlePolicyListDTO;
+import org.wso2.apimgt.gateway.codegen.service.bean.policy.SubscriptionThrottlePolicyDTO;
+import org.wso2.apimgt.gateway.codegen.service.bean.policy.SubscriptionThrottlePolicyListDTO;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
@@ -14,6 +18,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -25,7 +30,7 @@ public class APIServiceImpl implements APIService{
         API api = null;
         //calling token endpoint
         try {
-            String urlStr = "https://localhost:9443/api/am/publisher/v0.11/apis/" + id;
+            String urlStr = "https://localhost:9443/api/am/publisher/v0.12/apis/" + id;
             url = new URL(urlStr);
             urlConn = (HttpsURLConnection) url.openConnection();
             urlConn.setDoOutput(true);
@@ -73,6 +78,88 @@ public class APIServiceImpl implements APIService{
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public List<ApplicationThrottlePolicyDTO> getApplicationPolicies(String token) {
+        URL url;
+        HttpsURLConnection urlConn = null;
+        ApplicationThrottlePolicyListDTO appsList;
+        List<ApplicationThrottlePolicyDTO> filteredPolicyDTOS = new ArrayList<>();
+        //calling token endpoint
+        try {
+            String urlStr = "https://localhost:9443/api/am/admin/v0.12/throttling/policies/application";
+            url = new URL(urlStr);
+            urlConn = (HttpsURLConnection) url.openConnection();
+            urlConn.setDoOutput(true);
+            urlConn.setRequestMethod("GET");
+            urlConn.setRequestProperty("Authorization", "Bearer " + token);
+            int responseCode = urlConn.getResponseCode();
+            if (responseCode == 200) {
+                ObjectMapper mapper = new ObjectMapper();
+                String responseStr = getResponseString(urlConn.getInputStream());
+                System.out.println(responseStr);
+                //convert json string to object
+                appsList = mapper.readValue(responseStr, ApplicationThrottlePolicyListDTO.class);
+                List<ApplicationThrottlePolicyDTO> policyDTOS = appsList.getList();
+                for (ApplicationThrottlePolicyDTO policyDTO : policyDTOS ) {
+                    if(!"Unlimited".equalsIgnoreCase(policyDTO.getPolicyName())){
+                        filteredPolicyDTOS.add(policyDTO);
+                    }
+                }
+            } else {
+                throw new RuntimeException("Error occurred while getting token. Status code: " + responseCode);
+            }
+        } catch (Exception e) {
+            String msg = "Error while creating the new token for token regeneration.";
+            throw new RuntimeException(msg, e);
+        } finally {
+            if (urlConn != null) {
+                urlConn.disconnect();
+            }
+        }
+        return filteredPolicyDTOS;
+    }
+
+    @Override
+    public List<SubscriptionThrottlePolicyDTO> getSubscriptionPolicies(String token) {
+        URL url;
+        HttpsURLConnection urlConn = null;
+        SubscriptionThrottlePolicyListDTO subsList;
+        List<SubscriptionThrottlePolicyDTO> filteredPolicyDTOS = new ArrayList<>();
+        //calling token endpoint
+        try {
+            String urlStr = "https://localhost:9443/api/am/admin/v0.12/throttling/policies/subscription";
+            url = new URL(urlStr);
+            urlConn = (HttpsURLConnection) url.openConnection();
+            urlConn.setDoOutput(true);
+            urlConn.setRequestMethod("GET");
+            urlConn.setRequestProperty("Authorization", "Bearer " + token);
+            int responseCode = urlConn.getResponseCode();
+            if (responseCode == 200) {
+                ObjectMapper mapper = new ObjectMapper();
+                String responseStr = getResponseString(urlConn.getInputStream());
+                System.out.println(responseStr);
+                //convert json string to object
+                subsList = mapper.readValue(responseStr, SubscriptionThrottlePolicyListDTO.class);
+                List<SubscriptionThrottlePolicyDTO> policyDTOS = subsList.getList();
+                for (SubscriptionThrottlePolicyDTO policyDTO : policyDTOS ) {
+                    if(!"Unlimited".equalsIgnoreCase(policyDTO.getPolicyName())){
+                        filteredPolicyDTOS.add(policyDTO);
+                    }
+                }
+            } else {
+                throw new RuntimeException("Error occurred while getting token. Status code: " + responseCode);
+            }
+        } catch (Exception e) {
+            String msg = "Error while creating the new token for token regeneration.";
+            throw new RuntimeException(msg, e);
+        } finally {
+            if (urlConn != null) {
+                urlConn.disconnect();
+            }
+        }
+        return filteredPolicyDTOS;
     }
 
     private static String getResponseString(InputStream input) throws IOException {
