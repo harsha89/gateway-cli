@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.codegen.CodeGenerator;
+import org.wso2.apimgt.gateway.codegen.ThrottlePolicyGenerator;
 import org.wso2.apimgt.gateway.codegen.config.ConfigYAMLParser;
 import org.wso2.apimgt.gateway.codegen.config.bean.Config;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
@@ -35,6 +36,8 @@ import org.wso2.apimgt.gateway.codegen.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.codegen.service.APIService;
 import org.wso2.apimgt.gateway.codegen.service.APIServiceImpl;
 import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.service.bean.policy.ApplicationThrottlePolicyDTO;
+import org.wso2.apimgt.gateway.codegen.service.bean.policy.SubscriptionThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagement;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagementImpl;
 
@@ -82,6 +85,11 @@ public class Main {
             List<API> apis = apiService.getApis("59fff422-e12c-4814-ac16-33a000d3f486", accessToken);
             CodeGenerator codeGenerator = new CodeGenerator();
             codeGenerator.generate("/home/harsha/Downloads/gentest/gen", apis);
+
+            List<ApplicationThrottlePolicyDTO> applicationPolicies = apiService.getApplicationPolicies(accessToken);
+            List<SubscriptionThrottlePolicyDTO> subscriptionPolicies = apiService.getSubscriptionPolicies(accessToken);
+            ThrottlePolicyGenerator policyGenerator = new ThrottlePolicyGenerator();
+            policyGenerator.generate("/home/harsha/Downloads/gentest/gen", applicationPolicies, subscriptionPolicies);
         } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
