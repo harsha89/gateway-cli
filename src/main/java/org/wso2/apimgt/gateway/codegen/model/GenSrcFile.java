@@ -31,8 +31,6 @@ public class GenSrcFile {
     public enum GenFileType {
         GEN_SRC,
         MODEL_SRC,
-        IMPL_SRC,
-        TEST_SRC,
         RES;
 
         public boolean isOverwritable() {

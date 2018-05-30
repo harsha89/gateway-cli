@@ -81,7 +81,7 @@ public class Main {
             APIService apiService = new APIServiceImpl();
             List<API> apis = apiService.getApis("59fff422-e12c-4814-ac16-33a000d3f486", accessToken);
             CodeGenerator codeGenerator = new CodeGenerator();
-            codeGenerator.generate("/home/harsha/Downloads/gentest/gen", apis);
+            codeGenerator.generate("/home/harsha/Downloads/gentest/gen", apis, "harsha", true);
         } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
@@ -114,6 +114,11 @@ public class Main {
             setupCmd.setParentCmdParser(cmdParser);
 
             cmdParser.setProgramName("micro-gw");
+            System.out.println("++++++++++++++++++++++++++++++++++++++++");
+            System.out.println(args[0]);
+            System.out.println(args[1]);
+            System.out.println(args[2]);
+            System.out.println(args[3]);
             cmdParser.parse(args);
             String parsedCmdName = cmdParser.getParsedCommand();
 
@@ -217,7 +222,7 @@ public class Main {
     @Parameters(commandNames = "setup", commandDescription = "print usage information")
     private static class SetupCmd implements GatewayLauncherCmd {
 
-        @Parameter(description = "Command name")
+        @Parameter(arity = 1, description = "Command name")
         private List<String> setupCommands;
 
         @Parameter(names = "--java.debug", hidden = true)
@@ -235,9 +240,18 @@ public class Main {
         @Parameter(names = {"-o", "--overwrite"}, hidden = true)
         private boolean overwrite;
 
+        @Parameter(names = {"-p", "--path"}, hidden = true)
+        private boolean path;
+
         private JCommander parentCmdParser;
 
         public void execute() {
+
+            for(String s : setupCommands) {
+                System.out.println("===========================");
+                System.out.println(s);
+            }
+
             if (setupCommands == null) {
                 printUsageInfo(GatewayCliCommands.SETUP);
                 return;
@@ -288,6 +302,44 @@ public class Main {
         @Override
         public String getName() {
             return GatewayCliCommands.HELP;
+        }
+
+        @Override
+        public void setParentCmdParser(JCommander parentCmdParser) {
+            this.parentCmdParser = parentCmdParser;
+        }
+
+        private String promptForTextInput(String msg) {
+            outStream.println(msg);
+            return new String(System.console().readLine());
+        }
+    }
+
+    /**
+     * This class represents the "build" command and it holds arguments and flags specified by the user.
+     *
+     */
+    @Parameters(commandNames = "build", commandDescription = "micro gateway build information")
+    private static class BuildCmd implements GatewayLauncherCmd {
+
+        @Parameter(arity = 1, description = "Command name")
+        private List<String> buildCmmands;
+
+        @Parameter(names = "--java.debug", hidden = true)
+        private String javaDebugPort;
+
+        @Parameter(names = {"-l", "--label"}, hidden = true)
+        private String label;
+
+        private JCommander parentCmdParser;
+
+        public void execute() {
+
+        }
+
+        @Override
+        public String getName() {
+            return GatewayCliCommands.BUILD;
         }
 
         @Override

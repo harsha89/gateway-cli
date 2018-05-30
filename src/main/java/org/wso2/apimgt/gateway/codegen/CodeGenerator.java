@@ -27,7 +27,7 @@ import com.github.jknack.handlebars.io.ClassPathTemplateLoader;
 import com.github.jknack.handlebars.io.FileTemplateLoader;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
-import org.apache.commons.io.FileUtils;
+import org.wso2.apimgt.gateway.codegen.cmd.GatewayCliConstants;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.codegen.model.BallerinaService;
 import org.wso2.apimgt.gateway.codegen.model.GenSrcFile;
@@ -35,13 +35,14 @@ import org.wso2.apimgt.gateway.codegen.service.bean.API;
 import org.wso2.apimgt.gateway.codegen.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.codegen.utils.GeneratorConstants;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * This class generates Ballerina Services/Clients for a provided OAS definition.
@@ -55,38 +56,25 @@ public class CodeGenerator {
      * Generated source will be written to a ballerina package at {@code outPath}
      * <p>Method can be user for generating Ballerina mock services and clients</p>
      *
-     * @param outPath        Destination file path to save generated source files. If not provided
-     *                       {@code definitionPath} will be used as the default destination path
-     * @throws IOException               when file operations fail
+     * @throws IOException                  when file operations fail
      * @throws BallerinaServiceGenException when code generator fails
      */
-    public void generate(String outPath, List<API> apis)
+    public void generate(String ballerinaHome, List<API> apis, String labelName, boolean overwrite)
             throws IOException, BallerinaServiceGenException {
-        Path srcPath = CodegenUtils.getSourcePath(srcPackage, outPath);
-        Path implPath = CodegenUtils.getImplPath(srcPackage, srcPath);
-        List<GenSrcFile> genFiles = generate(apis.get(0));
-        writeGeneratedSources(genFiles, srcPath, implPath);
-    }
-
-    /**
-     * Generates ballerina source for provided Open API Definition in {@code definitionPath}.
-     * Generated code will be returned as a list of source files
-     * <p>Method can be user for generating Ballerina mock services and clients</p>
-     *
-     * * @param apiDefinition Input Open Api Definition file path
-     * @return a list of generated source files wrapped as {@link GenSrcFile}
-     * @throws IOException               when file operations fail
-     * @throws BallerinaServiceGenException when open api context building fail
-     */
-    public List<GenSrcFile> generate(API api)
-            throws IOException, BallerinaServiceGenException {
-        SwaggerParser parser = new SwaggerParser();
-        Swagger swagger = parser.parse(api.getApiDefinition());
-        BallerinaService definitionContext = new BallerinaService().buildContext(swagger, api).srcPackage(srcPackage)
-                .modelPackage(srcPackage);
-        List<GenSrcFile> sourceFiles;
-        sourceFiles = generateMock(definitionContext);
-        return sourceFiles;
+        BallerinaService definitionContext;
+        SwaggerParser parser;
+        Swagger swagger;
+        setupProjectDirectory(ballerinaHome, labelName);
+        List<GenSrcFile> genFiles = new ArrayList<>();
+        for (API api : apis) {
+            parser = new SwaggerParser();
+            swagger = parser.parse(api.getApiDefinition());
+            definitionContext = new BallerinaService().buildContext(swagger, api).srcPackage(srcPackage)
+                    .modelPackage(srcPackage);
+            genFiles.add(generateService(definitionContext));
+        }
+        String srcPath = ballerinaHome + File.separator + GatewayCliConstants.PROJECTS + File.separator + labelName;
+        writeGeneratedSources(genFiles, Paths.get(srcPath), overwrite);
     }
 
     /**
@@ -97,14 +85,13 @@ public class CodeGenerator {
      * @param templateName Name of the parent template to be used
      * @param outPath      Destination path for writing the resulting source file
      * @throws IOException when file operations fail
-     * file write functionality your self, if you need to customize file writing steps.
-     * to a ballerina package.
+     *                     file write functionality your self, if you need to customize file writing steps.
+     *                     to a ballerina package.
      */
     @Deprecated
     public void writeBallerina(Object object, String templateDir, String templateName, String outPath)
             throws IOException {
         PrintWriter writer = null;
-
         try {
             Template template = compileTemplate(templateDir, templateName);
             Context context = Context.newBuilder(object).resolver(
@@ -126,7 +113,6 @@ public class CodeGenerator {
         FileTemplateLoader fileTemplateLoader = new FileTemplateLoader(templatesDirPath);
         cpTemplateLoader.setSuffix(GeneratorConstants.TEMPLATES_SUFFIX);
         fileTemplateLoader.setSuffix(GeneratorConstants.TEMPLATES_SUFFIX);
-        
         Handlebars handlebars = new Handlebars().with(cpTemplateLoader, fileTemplateLoader);
         handlebars.registerHelpers(StringHelpers.class);
         handlebars.registerHelper("equals", (object, options) -> {
@@ -148,56 +134,39 @@ public class CodeGenerator {
 
             return result;
         });
-
         return handlebars.compile(templateName);
     }
 
-    private void writeGeneratedSources(List<GenSrcFile> sources, Path srcPath, Path implPath) throws IOException {
-        // Remove old generated files - if any - before regenerate
-        // if srcPackage was not provided and source was written to main package nothing will be deleted.
-        if (srcPackage != null && !srcPackage.isEmpty() && Files.exists(srcPath)) {
-            FileUtils.deleteDirectory(srcPath.toFile());
-        }
-
-        Files.createDirectories(srcPath);
+    private void writeGeneratedSources(List<GenSrcFile> sources, Path srcPath, boolean overwrite) throws IOException {
+        Path filePath;
         for (GenSrcFile file : sources) {
-            Path filePath;
-
-            // We only overwrite files of overwritable type.
-            // So non overwritable files will be written to disk only once.
-            if (!file.getType().isOverwritable()) {
-                filePath = implPath.resolve(file.getFileName());
-                if (Files.notExists(filePath)) {
+            filePath = srcPath.resolve(file.getFileName());
+            if (Files.notExists(filePath)) {
+                CodegenUtils.writeFile(filePath, file.getContent());
+            } else {
+                if (overwrite) {
+                    Files.delete(filePath);
                     CodegenUtils.writeFile(filePath, file.getContent());
                 }
-            } else {
-                filePath = srcPath.resolve(file.getFileName());
-                CodegenUtils.writeFile(filePath, file.getContent());
             }
         }
     }
 
     /**
-     * Generate code for mock ballerina service.
+     * Generate code for service ballerina service.
      *
      * @param context model context to be used by the templates
      * @return generated source files as a list of {@link GenSrcFile}
      * @throws IOException when code generation with specified templates fails
      */
-    private List<GenSrcFile> generateMock(BallerinaService context) throws IOException {
-        if (srcPackage == null || srcPackage.isEmpty()) {
-            srcPackage = GeneratorConstants.DEFAULT_SERVICE_PKG;
-        }
-
-        List<GenSrcFile> sourceFiles = new ArrayList<>();
-        String concatTitle = context.getInfo().getTitle().toLowerCase(Locale.ENGLISH).replaceAll(" ", "_");
+    private GenSrcFile generateService(BallerinaService context) throws IOException {
+        GenSrcFile sourceFile = null;
+        String concatTitle = context.getQualifiedServiceName();
         String srcFile = concatTitle + ".bal";
-
         String mainContent = getContent(context, GeneratorConstants.DEFAULT_SERVICE_DIR,
                 GeneratorConstants.SERVICE_TEMPLATE_NAME);
-        sourceFiles.add(new GenSrcFile(GenSrcFile.GenFileType.GEN_SRC, srcPackage, srcFile, mainContent));
-
-        return sourceFiles;
+        sourceFile = new GenSrcFile(GenSrcFile.GenFileType.GEN_SRC, srcPackage, srcFile, mainContent);
+        return sourceFile;
     }
 
     /**
@@ -215,6 +184,21 @@ public class CodeGenerator {
                 .resolver(MapValueResolver.INSTANCE, JavaBeanValueResolver.INSTANCE, FieldValueResolver.INSTANCE)
                 .build();
         return template.apply(context);
+    }
+
+    private void setupProjectDirectory(String ballerinaHome, String labelName) {
+        String projectPath = ballerinaHome + File.separator
+                + GatewayCliConstants.PROJECTS;
+        String labelPath = projectPath + File.separator + labelName;
+        File projectPathDir = new File(projectPath);
+        if (!projectPathDir.exists()) {
+            projectPathDir.mkdir();
+        }
+
+        File labelPathDir = new File(labelPath);
+        if (!labelPathDir.exists()) {
+            labelPathDir.mkdir();
+        }
     }
 
     public String getSrcPackage() {

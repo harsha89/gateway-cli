@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 
-public class APIServiceImpl implements APIService{
+public class APIServiceImpl implements APIService {
 
     public API getAPI(String id, String token) {
         URL url;
@@ -62,7 +62,8 @@ public class APIServiceImpl implements APIService{
         try {
             JsonNode rootNode = mapper.readTree(sample);
             JsonNode apisList = rootNode.get("list");
-            List<API> apis = mapper.readValue(apisList.toString(), new TypeReference<List<API>>(){});
+            List<API> apis = mapper.readValue(apisList.toString(), new TypeReference<List<API>>() {
+            });
             String endpointConfig = "";
             for (API api : apis) {
                 endpointConfig = api.getEndpointConfig();
@@ -96,51 +97,63 @@ public class APIServiceImpl implements APIService{
 
         if ("http".equalsIgnoreCase(endpointType) || "failover".equalsIgnoreCase(endpointType)) {
             JsonNode prodEndpointNode = rootNode.get("production_endpoints");
-            Endpoint prod = new Endpoint();
-            prod.setEndpointUrl(prodEndpointNode.get("url").asText());
-            endpointConf.addProdEndpoint(prod);
+            if (prodEndpointNode != null) {
+                Endpoint prod = new Endpoint();
+                prod.setEndpointUrl(prodEndpointNode.get("url").asText());
+                endpointConf.addProdEndpoint(prod);
+            }
 
             JsonNode sandEndpointNode = rootNode.get("sandbox_endpoints");
-            Endpoint sandbox = new Endpoint();
-            sandbox.setEndpointUrl(sandEndpointNode.get("url").asText());
-            endpointConf.addSandEndpoint(sandbox);
+            if (sandEndpointNode != null) {
+                Endpoint sandbox = new Endpoint();
+                sandbox.setEndpointUrl(sandEndpointNode.get("url").asText());
+                endpointConf.addSandEndpoint(sandbox);
+            }
 
             if ("failover".equalsIgnoreCase(endpointType)) {
                 JsonNode prodFailoverEndpointNode = rootNode.withArray("production_failovers");
-                Iterator<JsonNode> prodFailoverEndointIterator = prodFailoverEndpointNode.iterator();
-                while (prodFailoverEndointIterator.hasNext()) {
-                    JsonNode node = prodFailoverEndointIterator.next();
-                    Endpoint endpoint = new Endpoint();
-                    endpoint.setEndpointUrl(node.get("url").asText());
-                    endpointConf.addProdFailoverEndpoint(endpoint);
+                if (prodFailoverEndpointNode != null) {
+                    Iterator<JsonNode> prodFailoverEndointIterator = prodFailoverEndpointNode.iterator();
+                    while (prodFailoverEndointIterator.hasNext()) {
+                        JsonNode node = prodFailoverEndointIterator.next();
+                        Endpoint endpoint = new Endpoint();
+                        endpoint.setEndpointUrl(node.get("url").asText());
+                        endpointConf.addProdFailoverEndpoint(endpoint);
+                    }
                 }
 
                 JsonNode sandFailoverEndpointNode = rootNode.withArray("sandbox_failovers");
-                Iterator<JsonNode> sandboxFailoverEndointIterator = sandFailoverEndpointNode.iterator();
-                while (sandboxFailoverEndointIterator.hasNext()) {
-                    JsonNode node = sandboxFailoverEndointIterator.next();
-                    Endpoint endpoint = new Endpoint();
-                    endpoint.setEndpointUrl(node.get("url").asText());
-                    endpointConf.addSandFailoverEndpoint(endpoint);
+                if (sandFailoverEndpointNode != null) {
+                    Iterator<JsonNode> sandboxFailoverEndointIterator = sandFailoverEndpointNode.iterator();
+                    while (sandboxFailoverEndointIterator.hasNext()) {
+                        JsonNode node = sandboxFailoverEndointIterator.next();
+                        Endpoint endpoint = new Endpoint();
+                        endpoint.setEndpointUrl(node.get("url").asText());
+                        endpointConf.addSandFailoverEndpoint(endpoint);
+                    }
                 }
             }
         } else if ("load_balance".equalsIgnoreCase(endpointType)) {
             JsonNode prodEndoints = rootNode.withArray("production_endpoints");
-            Iterator<JsonNode> prodEndointIterator = prodEndoints.iterator();
-            while (prodEndointIterator.hasNext()) {
-                JsonNode node = prodEndointIterator.next();
-                Endpoint endpoint = new Endpoint();
-                endpoint.setEndpointUrl(node.get("url").asText());
-                endpointConf.addProdEndpoint(endpoint);
+            if (prodEndoints != null) {
+                Iterator<JsonNode> prodEndointIterator = prodEndoints.iterator();
+                while (prodEndointIterator.hasNext()) {
+                    JsonNode node = prodEndointIterator.next();
+                    Endpoint endpoint = new Endpoint();
+                    endpoint.setEndpointUrl(node.get("url").asText());
+                    endpointConf.addProdEndpoint(endpoint);
+                }
             }
 
             JsonNode sandboxEndpoints = rootNode.withArray("sandbox_endpoints");
-            Iterator<JsonNode> sandboxEndointIterator = sandboxEndpoints.iterator();
-            while (sandboxEndointIterator.hasNext()) {
-                JsonNode node = sandboxEndointIterator.next();
-                Endpoint endpoint = new Endpoint();
-                endpoint.setEndpointUrl(node.get("url").asText());
-                endpointConf.addSandEndpoint(endpoint);
+            if (sandboxEndpoints != null) {
+                Iterator<JsonNode> sandboxEndointIterator = sandboxEndpoints.iterator();
+                while (sandboxEndointIterator.hasNext()) {
+                    JsonNode node = sandboxEndointIterator.next();
+                    Endpoint endpoint = new Endpoint();
+                    endpoint.setEndpointUrl(node.get("url").asText());
+                    endpointConf.addSandEndpoint(endpoint);
+                }
             }
         }
         return endpointConf;

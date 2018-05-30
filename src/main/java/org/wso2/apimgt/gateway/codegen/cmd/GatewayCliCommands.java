@@ -22,4 +22,5 @@ public class GatewayCliCommands {
     public static final String HELP = "help";
     public static final String DEFAULT = "default";
     public static final String SETUP = "setup";
+    public static final String BUILD = "build";
 }
