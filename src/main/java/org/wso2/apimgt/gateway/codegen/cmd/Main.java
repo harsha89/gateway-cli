@@ -24,6 +24,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.apache.commons.lang3.StringUtils;
+import org.ballerinalang.packerina.BuilderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.codegen.CodeGenerator;
@@ -326,25 +327,15 @@ public class Main {
                 throw GatewayCmdUtils.createUsageException("too many arguments");
             }
 
+
             // Get source root path.
-            Path sourceRootPath = Paths.get(System.getProperty(USER_DIR));
+            Path sourceRootPath = Paths.get();
             if (argList == null || argList.size() == 0) {
                 // ballerina build
-                BuilderUtils.compileAndWrite(sourceRootPath, offline);
+                BuilderUtils.compileAndWrite(sourceRootPath, true);
             } else {
-                // ballerina build pkgName [-o outputFileName]
-                String targetFileName;
-                String pkgName = argList.get(0);
-                if (pkgName.endsWith("/")) {
-                    pkgName = pkgName.substring(0, pkgName.length() - 1);
-                }
-                if (outputFileName != null && !outputFileName.isEmpty()) {
-                    targetFileName = outputFileName;
-                } else {
-                    targetFileName = pkgName;
-                }
 
-                BuilderUtils.compileAndWrite(sourceRootPath, pkgName, targetFileName, buildCompiledPkg, offline);
+                BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, true);
             }
 
             Runtime.getRuntime().exit(0);
