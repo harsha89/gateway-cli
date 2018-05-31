@@ -51,6 +51,8 @@ public class GeneratorConstants {
     public static final String IMPL_TEMPLATE_NAME = "impl";
     public static final String SCHEMA_TEMPLATE_NAME = "schemas";
     public static final String COMMON_MODELS_TEMPLATE_NAME = "common";
+    public static final String THROTTLE_POLICY_TEMPLATE_NAME = "policy";
+    public static final String THROTTLE_POLICY_INIT_TEMPLATE_NAME = "policy_init";
 
     public static final String SCHEMA_FILE_NAME = "schema.bal";
     public static final String COMMON_MODELS_FILE_NAME = "common.bal";
@@ -75,5 +77,14 @@ public class GeneratorConstants {
                     "next", "break", "fork", "join", "some", "all", "timeout", "try", "catch", "finally", "throw",
                     "return", "transaction", "abort", "fail", "onretry", "retries", "onabort", "oncommit", "lengthof",
                     "typeof", "with", "in", "lock", "untaint", "async", "await", "but", "check", "done"));
+
+    //    Throttle related constants
+    public static final String APPLICATION_POLICY_TYPE = "application";
+    public static final String SUBSCRIPTION_POLICY_TYPE = "subscription";
+    public static final String APPLICATION_INIT_FUNC_PREFIX = "initApplication";
+    public static final String SUBSCRIPTION_INIT_FUNC_PREFIX = "initSubscription";
+    public static final String APPLICATION_KEY = "appKey";
+    public static final String SUBSCRIPTION_KEY = "subscriptionKey";
+    public static final String INIT_FUNC_SUFFIX = "Policy";
 
 }
