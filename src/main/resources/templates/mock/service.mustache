@@ -31,7 +31,7 @@ endpoint http:Client {{qualifiedServiceName}}_EP {
 }
 
 @http:ServiceConfig {
-    basePath: "{{api.context}}/{{api.version}}"{{!-- {{only one base path is allowed for all endpoints}} --}}
+    basePath: "{{api.context}}/{{api.version}}",{{!-- {{only one base path is allowed for all endpoints}} --}}
     authConfig:{
         authProviders:["oauth2"],
         authentication:{enabled:true}
@@ -66,7 +66,7 @@ service<http:Service> {{cut qualifiedServiceName " "}} bind apiListener,apiSecur
         }
     }
     @gateway:RateLimit{policy : "{{resourceTier}}"}
-    {{operationId}} (endpoint outboundEp, http:Request req{{#parameters}}{{>pathParams}}{{/parameters}}) {
+    {{operationId}} (endpoint outboundEp, http:Request req{{#parameters}}{{>pathParameters}}{{/parameters}}) {
             var result = {{qualifiedServiceName}}_EP -> {{key}}("{{../../key}}", request = req);
             match result {
                 http:Response clientResponse => {

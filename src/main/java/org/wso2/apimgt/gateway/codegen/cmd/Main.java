@@ -51,7 +51,6 @@ import java.util.Optional;
 
 /**
  * This class executes the gateway cli program.
- *
  */
 public class Main {
     private static final String JC_UNKNOWN_OPTION_PREFIX = "Unknown option:";
@@ -87,6 +86,15 @@ public class Main {
             List<API> apis = apiService.getApis("accounts", accessToken);
             CodeGenerator codeGenerator = new CodeGenerator();
             codeGenerator.generate(GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts"), apis, true);
+
+
+            String path = GatewayCmdUtils.getLabelDirectoryPath(root, "accounts");
+            String pkgPath = GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts");
+            // Get source root path.
+            Path sourceRootPath = Paths.get(pkgPath);
+            Path packagePath = Paths.get(pkgPath);
+            String label = "accounts";
+            BuilderUtils.compileAndWrite(sourceRootPath, true);
         } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
@@ -163,7 +171,6 @@ public class Main {
 
     /**
      * This class represents the "help" command and it holds arguments and flags specified by the user.
-     *
      */
     @Parameters(commandNames = "help", commandDescription = "print usage information")
     private static class HelpCmd implements GatewayLauncherCmd {
@@ -208,7 +215,6 @@ public class Main {
 
     /**
      * This class represents the "help" command and it holds arguments and flags specified by the user.
-     *
      */
     @Parameters(commandNames = "setup", commandDescription = "setup information")
     private static class SetupCmd implements GatewayLauncherCmd {
@@ -279,7 +285,8 @@ public class Main {
         }
 
         @Override
-        public void setParentCmdParser(JCommander parentCmdParser) { }
+        public void setParentCmdParser(JCommander parentCmdParser) {
+        }
 
         private String promptForTextInput(String msg) {
             outStream.println(msg);
@@ -294,7 +301,6 @@ public class Main {
 
     /**
      * This class represents the "build" command and it holds arguments and flags specified by the user.
-     *
      */
     @Parameters(commandNames = "build", commandDescription = "micro gateway build information")
     private static class BuildCmd implements GatewayLauncherCmd {
@@ -308,7 +314,7 @@ public class Main {
         @Parameter(names = {"-l", "--label"}, hidden = true)
         private String label;
 
-        @Parameter(names = { "--help", "-h", "?" }, hidden = true, description = "for more information")
+        @Parameter(names = {"--help", "-h", "?"}, hidden = true, description = "for more information")
         private boolean helpFlag;
 
         @Parameter(arity = 1)
@@ -327,16 +333,13 @@ public class Main {
                 throw GatewayCmdUtils.createUsageException("too many arguments");
             }
 
-
+            String root = "/home/harsha/Downloads/myroot";
+            String path = GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts");
             // Get source root path.
-            Path sourceRootPath = Paths.get();
-            if (argList == null || argList.size() == 0) {
-                // ballerina build
-                BuilderUtils.compileAndWrite(sourceRootPath, true);
-            } else {
+            Path sourceRootPath = Paths.get(path);
+            label = "accounts";
+            BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, true);
 
-                BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, true);
-            }
 
             Runtime.getRuntime().exit(0);
         }
@@ -359,11 +362,10 @@ public class Main {
 
     /**
      * This class represents the "main" command required by the JCommander.
-     *
      */
     private static class DefaultCmd implements GatewayLauncherCmd {
 
-        @Parameter(names = { "--help", "-h", "?" }, hidden = true, description = "for more information")
+        @Parameter(names = {"--help", "-h", "?"}, hidden = true, description = "for more information")
         private boolean helpFlag;
 
         @Parameter(names = "--java.debug", hidden = true)

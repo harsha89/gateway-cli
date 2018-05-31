@@ -184,21 +184,6 @@ public class CodeGenerator {
         return template.apply(context);
     }
 
-    private void setupProjectDirectory(String ballerinaHome, String labelName) {
-        String projectPath = ballerinaHome + File.separator
-                + GatewayCliConstants.PROJECTS;
-        String labelPath = projectPath + File.separator + labelName;
-        File projectPathDir = new File(projectPath);
-        if (!projectPathDir.exists()) {
-            projectPathDir.mkdir();
-        }
-
-        File labelPathDir = new File(labelPath);
-        if (!labelPathDir.exists()) {
-            labelPathDir.mkdir();
-        }
-    }
-
     public String getSrcPackage() {
         return srcPackage;
     }

@@ -51,7 +51,7 @@ public class ThrottlePolicyGenerator {
     private String srcPackage;
     private String modelPackage;
 
-    /**
+   /* *//**
      * Generate ballerina and stream source for a given app and subs policies
      *
      * @param outPath              Destination file path to save generated source files. If not provided
@@ -60,7 +60,7 @@ public class ThrottlePolicyGenerator {
      * @param subscriptionPolicies list of subs policies
      * @throws IOException                  when file operations fail
      * @throws BallerinaServiceGenException when code generator fails
-     */
+     *//*
     public void generate(String outPath, List<ApplicationThrottlePolicyDTO> applicationPolicies,
             List<SubscriptionThrottlePolicyDTO> subscriptionPolicies) throws IOException, BallerinaServiceGenException {
         Path srcPath = CodegenUtils.getSourcePath(srcPackage, outPath);
@@ -74,7 +74,7 @@ public class ThrottlePolicyGenerator {
         genFiles.add(initGenFile);
         writeGeneratedSources(genFiles, srcPath, implPath);
     }
-
+*/
     /**
      * Generate application policies source
      *
