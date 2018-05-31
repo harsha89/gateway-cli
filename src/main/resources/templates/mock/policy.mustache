@@ -14,8 +14,7 @@ function {{funcName}}() {
         }
 
         from eligibilityStream
-        //throttler:timeBatch({{unitTime}} {{timeUnit}})
-        throttler:timeBatch(60000)
+        throttler:timeBatch({{unitTime}}, 0)
         where isEligible == true
         select throttleKey, count(messageID) >= {{count}} as isThrottled, expiryTimeStamp
         group by throttleKey
