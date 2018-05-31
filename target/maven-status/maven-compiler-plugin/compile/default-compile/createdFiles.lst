@@ -1,7 +1,4 @@
-org/wso2/apimgt/gateway/codegen/CodeGenerator.class
-org/wso2/apimgt/gateway/codegen/cmd/GatewayCmdUtils.class
 org/wso2/apimgt/gateway/codegen/model/BallerinaParameter.class
-org/wso2/apimgt/gateway/codegen/token/TokenManagementConstants.class
 org/wso2/apimgt/gateway/codegen/exception/CliLauncherException.class
 org/wso2/apimgt/gateway/codegen/service/bean/API$SubscriptionAvailabilityEnum.class
 org/wso2/apimgt/gateway/codegen/model/BallerinaPath.class
@@ -25,7 +22,6 @@ org/wso2/apimgt/gateway/codegen/config/bean/Config.class
 org/wso2/apimgt/gateway/codegen/service/bean/APIEndpointSecurityDTO$TypeEnum.class
 org/wso2/apimgt/gateway/codegen/token/TokenManagementUtil.class
 org/wso2/apimgt/gateway/codegen/service/APIServiceConstants.class
-org/wso2/apimgt/gateway/codegen/cmd/GatewayCliConstants.class
 org/wso2/apimgt/gateway/codegen/service/bean/API$VisibilityEnum.class
 org/wso2/apimgt/gateway/codegen/service/bean/Endpoint.class
 org/wso2/apimgt/gateway/codegen/cmd/Main$1.class
@@ -43,6 +39,7 @@ org/wso2/apimgt/gateway/codegen/exception/ConfigParserException.class
 org/wso2/apimgt/gateway/codegen/model/BallerinaOperation.class
 org/wso2/apimgt/gateway/codegen/service/bean/APIMaxTpsDTO.class
 org/wso2/apimgt/gateway/codegen/cmd/GatewayCliCommands.class
+org/wso2/apimgt/gateway/codegen/cmd/Main$BuildCmd.class
 org/wso2/apimgt/gateway/codegen/service/APIServiceImpl$1.class
 org/wso2/apimgt/gateway/codegen/service/bean/APIEndpointSecurityDTO.class
 org/wso2/apimgt/gateway/codegen/service/bean/API$AccessControlEnum.class

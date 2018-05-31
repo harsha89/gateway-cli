@@ -59,5 +59,8 @@
     <orderEntry type="library" name="Maven: com.beust:jcommander:1.60" level="project" />
     <orderEntry type="library" name="Maven: org.testng:testng:6.9.4" level="project" />
     <orderEntry type="library" name="Maven: org.beanshell:bsh:2.0b4" level="project" />
+    <orderEntry type="library" name="Maven: org.ballerinalang:ballerina-config:0.970.1" level="project" />
+    <orderEntry type="library" name="Maven: org.wso2.orbit.org.antlr:antlr4-runtime:4.5.1.wso2v1" level="project" />
+    <orderEntry type="library" name="Maven: org.ballerinalang:toml-parser:0.970.1" level="project" />
   </component>
 </module>

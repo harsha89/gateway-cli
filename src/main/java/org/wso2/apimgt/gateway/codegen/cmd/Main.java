@@ -38,8 +38,12 @@ import org.wso2.apimgt.gateway.codegen.service.bean.API;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagement;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagementImpl;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,45 +62,43 @@ public class Main {
 
     public static void main(String... args) {
         try {
-           /* String ballerinaHome  = System.getProperty(GatewayCliConstants.BALLERINA_HOME);
-            if (StringUtils.isEmpty(ballerinaHome)) {
-                outStream.println("Please set BALLERINA_HOME variable to continue");
-                Runtime.getRuntime().exit(1);
-            }*/
-
-            //String trustoreLocation = ballerinaHome + "";
-            Optional<GatewayLauncherCmd> optionalInvokedCmd = getInvokedCmd(args);
-            optionalInvokedCmd.ifPresent(GatewayLauncherCmd::execute);
-            String configPath = "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/main-config.yaml";
-            Config config =
-                    ConfigYAMLParser.parse(configPath, Config.class);
-            System.setProperty("javax.net.ssl.trustStore", "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/client-truststore.jks");
-            System.setProperty("javax.net.ssl.trustStorePassword", "wso2carbon");
+            String tempRoot = "/home/harsha/Downloads/myroot";
+            GatewayCmdUtils.createTempDir(tempRoot);
+            GatewayCmdUtils.createTempPathTxt(tempRoot, tempRoot);
+            String root = GatewayCmdUtils.getProjectRoot(tempRoot);
+            GatewayCmdUtils.createMainProjectStructure(root);
+            GatewayCmdUtils.createLabelProjectStructure(root, "accounts");
+            GatewayCmdUtils.createMainConfig(root);
+            String configPath = GatewayCmdUtils.getMainConfigPath(root) + File.separator + GatewayCliConstants.MAIN_CONFIG_FILE_NAME;
+            Config config = ConfigYAMLParser.parse(configPath, Config.class);
+            System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+            System.setProperty("javax.net.ssl.trustStore", config.getTokenConfig().getTrustoreLocation());
+            System.setProperty("javax.net.ssl.trustStorePassword", config.getTokenConfig().getTrustorePassword());
             TokenManagementImpl tokenManagement = new TokenManagementImpl();
             GatewayCmdUtils.setConfig(config);
+            Optional<GatewayLauncherCmd> optionalInvokedCmd = getInvokedCmd(args);
+            optionalInvokedCmd.ifPresent(GatewayLauncherCmd::execute);
             tokenManagement.generateClientIdAndSecret(config);
             String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(),
                     config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
             System.out.println(accessToken);
             APIService apiService = new APIServiceImpl();
-            List<API> apis = apiService.getApis("59fff422-e12c-4814-ac16-33a000d3f486", accessToken);
+            List<API> apis = apiService.getApis("accounts", accessToken);
             CodeGenerator codeGenerator = new CodeGenerator();
-            codeGenerator.generate("/home/harsha/Downloads/gentest/gen", apis, "harsha", true);
+            codeGenerator.generate(GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts"), apis, true);
         } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
         } catch (ConfigParserException e) {
-            e.printStackTrace();
+            outStream.println("Error while parsing the config");
+            Runtime.getRuntime().exit(1);
         } catch (BallerinaServiceGenException e) {
-            e.printStackTrace();
+            outStream.println("Error while generating the ballerina service");
+            Runtime.getRuntime().exit(1);
         } catch (IOException e) {
-            e.printStackTrace();
+            outStream.println("Error while processing files");
+            Runtime.getRuntime().exit(1);
         }
-    }
-
-    private static JCommander addSubCommand(JCommander parentCmd, String commandName, Object commandObject) {
-        parentCmd.addCommand(commandName, commandObject);
-        return parentCmd.getCommands().get(commandName);
     }
 
     private static Optional<GatewayLauncherCmd> getInvokedCmd(String... args) {
@@ -113,12 +115,11 @@ public class Main {
             cmdParser.addCommand(GatewayCliCommands.SETUP, setupCmd);
             setupCmd.setParentCmdParser(cmdParser);
 
+            BuildCmd buildCmd = new BuildCmd();
+            cmdParser.addCommand(GatewayCliCommands.BUILD, setupCmd);
+            buildCmd.setParentCmdParser(cmdParser);
+
             cmdParser.setProgramName("micro-gw");
-            System.out.println("++++++++++++++++++++++++++++++++++++++++");
-            System.out.println(args[0]);
-            System.out.println(args[1]);
-            System.out.println(args[2]);
-            System.out.println(args[3]);
             cmdParser.parse(args);
             String parsedCmdName = cmdParser.getParsedCommand();
 
@@ -130,7 +131,6 @@ public class Main {
 
             Map<String, JCommander> commanderMap = cmdParser.getCommands();
             return Optional.of((GatewayLauncherCmd) commanderMap.get(parsedCmdName).getObjects().get(0));
-
         } catch (MissingCommandException e) {
             String errorMsg = "unknown command '" + e.getUnknownCommand() + "'";
             throw GatewayCmdUtils.createUsageException(errorMsg);
@@ -158,16 +158,6 @@ public class Main {
     private static void printUsageInfo(String commandName) {
         String usageInfo = GatewayLauncherCmd.getCommandUsageInfo(commandName);
         outStream.println(usageInfo);
-    }
-
-    private static String getMessageForInternalErrors() {
-        String errorMsg;
-        try {
-            errorMsg = GatewayCmdUtils.readFileAsString("cli-help/internal-error-message.txt");
-        } catch (IOException e) {
-            errorMsg = "ballerina: internal error occurred";
-        }
-        return errorMsg;
     }
 
     /**
@@ -219,11 +209,8 @@ public class Main {
      * This class represents the "help" command and it holds arguments and flags specified by the user.
      *
      */
-    @Parameters(commandNames = "setup", commandDescription = "print usage information")
+    @Parameters(commandNames = "setup", commandDescription = "setup information")
     private static class SetupCmd implements GatewayLauncherCmd {
-
-        @Parameter(arity = 1, description = "Command name")
-        private List<String> setupCommands;
 
         @Parameter(names = "--java.debug", hidden = true)
         private String javaDebugPort;
@@ -231,7 +218,7 @@ public class Main {
         @Parameter(names = {"-u", "--user"}, hidden = true)
         private String username;
 
-        @Parameter(names = {"-p", "--password"}, hidden = true)
+        @Parameter(names = {"-p", "--password"}, hidden = true, password = true)
         private String password;
 
         @Parameter(names = {"-l", "--label"}, hidden = true)
@@ -240,24 +227,10 @@ public class Main {
         @Parameter(names = {"-o", "--overwrite"}, hidden = true)
         private boolean overwrite;
 
-        @Parameter(names = {"-p", "--path"}, hidden = true)
+        @Parameter(names = {"--path"}, hidden = true)
         private boolean path;
 
-        private JCommander parentCmdParser;
-
         public void execute() {
-
-            for(String s : setupCommands) {
-                System.out.println("===========================");
-                System.out.println(s);
-            }
-
-            if (setupCommands == null) {
-                printUsageInfo(GatewayCliCommands.SETUP);
-                return;
-            } else if (setupCommands.size() > 1) {
-                throw GatewayCmdUtils.createUsageException("too many arguments given");
-            }
 
             Config config = GatewayCmdUtils.getConfig();
             String configuredUser = config.getTokenConfig().getUsername();
@@ -273,12 +246,12 @@ public class Main {
                 }
             }
 
-            if (StringUtils.isEmpty(username)) {
-                if ((password = promptForTextInput("Enter Password: ")).trim().isEmpty()) {
-                    if (StringUtils.isEmpty(username)) {
-                        password = promptForTextInput("Password can't be empty; enter secret: ");
-                        if (username.trim().isEmpty()) {
-                            throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty username.");
+            if (StringUtils.isEmpty(password)) {
+                if ((password = promptForPassowordInput("Enter Password: ")).trim().isEmpty()) {
+                    if (StringUtils.isEmpty(password)) {
+                        password = promptForPassowordInput("Password can't be empty; enter password: ");
+                        if (password.trim().isEmpty()) {
+                            throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty password.");
                         }
                     }
                 }
@@ -305,13 +278,16 @@ public class Main {
         }
 
         @Override
-        public void setParentCmdParser(JCommander parentCmdParser) {
-            this.parentCmdParser = parentCmdParser;
-        }
+        public void setParentCmdParser(JCommander parentCmdParser) { }
 
         private String promptForTextInput(String msg) {
             outStream.println(msg);
-            return new String(System.console().readLine());
+            return System.console().readLine();
+        }
+
+        private String promptForPassowordInput(String msg) {
+            outStream.println(msg);
+            return new String(System.console().readPassword());
         }
     }
 
@@ -331,10 +307,47 @@ public class Main {
         @Parameter(names = {"-l", "--label"}, hidden = true)
         private String label;
 
+        @Parameter(names = { "--help", "-h", "?" }, hidden = true, description = "for more information")
+        private boolean helpFlag;
+
+        @Parameter(arity = 1)
+        private List<String> argList;
+
         private JCommander parentCmdParser;
 
         public void execute() {
+            if (helpFlag) {
+                String commandUsageInfo = GatewayLauncherCmd.getCommandUsageInfo("build");
+                outStream.println(commandUsageInfo);
+                return;
+            }
 
+            if (argList != null && argList.size() > 1) {
+                throw GatewayCmdUtils.createUsageException("too many arguments");
+            }
+
+            // Get source root path.
+            Path sourceRootPath = Paths.get(System.getProperty(USER_DIR));
+            if (argList == null || argList.size() == 0) {
+                // ballerina build
+                BuilderUtils.compileAndWrite(sourceRootPath, offline);
+            } else {
+                // ballerina build pkgName [-o outputFileName]
+                String targetFileName;
+                String pkgName = argList.get(0);
+                if (pkgName.endsWith("/")) {
+                    pkgName = pkgName.substring(0, pkgName.length() - 1);
+                }
+                if (outputFileName != null && !outputFileName.isEmpty()) {
+                    targetFileName = outputFileName;
+                } else {
+                    targetFileName = pkgName;
+                }
+
+                BuilderUtils.compileAndWrite(sourceRootPath, pkgName, targetFileName, buildCompiledPkg, offline);
+            }
+
+            Runtime.getRuntime().exit(0);
         }
 
         @Override

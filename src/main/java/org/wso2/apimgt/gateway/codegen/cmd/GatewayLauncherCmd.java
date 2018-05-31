@@ -43,7 +43,7 @@ public interface GatewayLauncherCmd {
 
         String fileName = "cli-help/cli-" + commandName + ".help";
         try {
-            return GatewayCmdUtils.readFileAsString(fileName);
+            return GatewayCmdUtils.readFileAsString(fileName, true);
         } catch (IOException e) {
             throw GatewayCmdUtils.createUsageException("usage info not available for command: " + commandName);
         }

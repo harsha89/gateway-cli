@@ -96,7 +96,7 @@ public class TokenManagementImpl implements TokenManagement {
                 String clientSecret = clientSecretNode.asText();
                 config.getTokenConfig().setClientSecret(clientSecret);
                 config.getTokenConfig().setClientId(clientId);
-                String configPath = "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/main-config.yaml";
+                String configPath = "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/default-config.yaml";
                 ConfigYAMLParser.write(configPath, config, Config.class);
             } else { //If DCR call fails
                 throw new RuntimeException("DCR call failed. Status code: " + responseCode);

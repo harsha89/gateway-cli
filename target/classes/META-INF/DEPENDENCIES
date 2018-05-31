@@ -61,6 +61,8 @@ From: 'an unknown organization'
     License: The MIT License  (http://www.opensource.org/licenses/mit-license.php)
   - TestNG (http://testng.org) org.testng:testng:jar:6.9.4
     License: Apache License, Version 2.0  (http://apache.org/licenses/LICENSE-2.0)
+  - odata-server 4.0.0.wso2v1 Orbit Bundle (http://wso2.org) org.wso2.orbit.org.antlr:antlr4-runtime:bundle:4.5.1.wso2v1
+
   - SnakeYAML (http://www.snakeyaml.org) org.yaml:snakeyaml:bundle:1.18
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
@@ -119,6 +121,12 @@ From: 'The Apache Software Foundation' (http://www.apache.org/)
 From: 'The Mozilla Foundation' (http://www.mozilla.org)
   - Mozilla Rhino (https://developer.mozilla.org/en/Rhino) org.mozilla:rhino:jar:1.7R4
     License: Mozilla Public License, Version 2.0  (http://www.mozilla.org/MPL/2.0/index.txt)
+
+From: 'WSO2' (http://www.wso2.org/)
+  - Ballerina - Config API (http://ballerinalang.org) org.ballerinalang:ballerina-config:jar:0.970.1
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Ballerina - Toml Parser (http://ballerinalang.org/misc/toml-parser/) org.ballerinalang:toml-parser:jar:0.970.1
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 
 

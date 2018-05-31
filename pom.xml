@@ -56,65 +56,10 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-config</artifactId>
+        </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.4.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <dependencyReducedPomLocation>
-                                ${java.io.tmpdir}/dependency-reduced-pom.xml
-                            </dependencyReducedPomLocation>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.github.jknack:handlebars</include>
-                                    <include>commons-io:commons-io</include>
-                                    <include>io.swagger:swagger-core</include>
-                                    <include>io.swagger:swagger-models</include>
-                                    <include>io.swagger:swagger-parser</include>
-                                    <include>io.swagger.core.v3:swagger-core</include>
-                                    <include>io.swagger.core.v3:swagger-models</include>
-                                    <include>io.swagger.parser.v3:swagger-parser</include>
-                                    <include>io.swagger.parser.v3:swagger-parser-core</include>
-                                    <include>io.swagger.parser.v3:swagger-parser-v2-converter</include>
-                                    <include>io.swagger.parser.v3:swagger-parser-v3</include>
-                                    <include>javax.validation:validation-api</include>
-                                    <include>com.google.code.gson:gson</include>
-                                    <include>org.ballerinalang:ballerina-to-swagger</include>
-                                    <include>org.ballerinalang:composer-ballerina-parser-service</include>
-                                    <include>org.ballerinalang:language-server-core</include>
-                                    <include>org.ballerinalang:language-server-compiler</include>
-                                </includes>
-                            </artifactSet>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>
 

@@ -59,12 +59,11 @@ public class CodeGenerator {
      * @throws IOException                  when file operations fail
      * @throws BallerinaServiceGenException when code generator fails
      */
-    public void generate(String ballerinaHome, List<API> apis, String labelName, boolean overwrite)
+    public void generate(String labelPath, List<API> apis, boolean overwrite)
             throws IOException, BallerinaServiceGenException {
         BallerinaService definitionContext;
         SwaggerParser parser;
         Swagger swagger;
-        setupProjectDirectory(ballerinaHome, labelName);
         List<GenSrcFile> genFiles = new ArrayList<>();
         for (API api : apis) {
             parser = new SwaggerParser();
@@ -73,8 +72,7 @@ public class CodeGenerator {
                     .modelPackage(srcPackage);
             genFiles.add(generateService(definitionContext));
         }
-        String srcPath = ballerinaHome + File.separator + GatewayCliConstants.PROJECTS + File.separator + labelName;
-        writeGeneratedSources(genFiles, Paths.get(srcPath), overwrite);
+        writeGeneratedSources(genFiles, Paths.get(labelPath), overwrite);
     }
 
     /**
