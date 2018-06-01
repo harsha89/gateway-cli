@@ -202,6 +202,12 @@ public class GatewayCmdUtils {
                 + File.separator + labelName + File.separator + GatewayCliConstants.PROJECTS_SRC_DIRECTORY_NAME;
      }
 
+    public static String getLabelDirectoryPath(String root, String labelName) {
+        return root + File.separator + GatewayCliConstants.MAIN_DIRECTORY_NAME +
+                File.separator + GatewayCliConstants.PROJECTS_DIRECTORY_NAME
+                + File.separator + labelName;
+    }
+
     public static void createMainConfig(String root) throws IOException {
         String mainConfig = getMainConfigPath(root) + File.separator + GatewayCliConstants.MAIN_CONFIG_FILE_NAME;
         File file = new File(mainConfig);

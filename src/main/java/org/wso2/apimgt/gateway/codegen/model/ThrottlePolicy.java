@@ -22,13 +22,15 @@ import org.wso2.apimgt.gateway.codegen.service.bean.policy.RequestCountLimitDTO;
 import org.wso2.apimgt.gateway.codegen.service.bean.policy.SubscriptionThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.codegen.utils.GeneratorConstants;
 
+import java.util.concurrent.TimeUnit;
+
 public class ThrottlePolicy {
 
     private String policyType;
     private String policyKey;
     private String name;
-    private int unitTime;
-    private String timeUnit;
+    //    unit time in milliSeconds
+    private long unitTime;
     private String srcPackage;
     private String modelPackage;
     private String funcName;
@@ -50,11 +52,11 @@ public class ThrottlePolicy {
         this.name = name;
     }
 
-    public int getUnitTime() {
+    public long getUnitTime() {
         return unitTime;
     }
 
-    public void setUnitTime(int unitTime) {
+    public void setUnitTime(long unitTime) {
         this.unitTime = unitTime;
     }
 
@@ -64,14 +66,6 @@ public class ThrottlePolicy {
 
     public void setCount(long count) {
         this.count = count;
-    }
-
-    public String getTimeUnit() {
-        return timeUnit;
-    }
-
-    public void setTimeUnit(String timeUnit) {
-        this.timeUnit = timeUnit;
     }
 
     public String getSrcPackage() {
@@ -111,8 +105,7 @@ public class ThrottlePolicy {
         this.name = applicationPolicy.getPolicyName();
         RequestCountLimitDTO requestCountLimitDTO = (RequestCountLimitDTO) applicationPolicy.getDefaultLimit();
         this.count = requestCountLimitDTO.getRequestCount();
-        this.unitTime = requestCountLimitDTO.getUnitTime();
-        this.timeUnit = requestCountLimitDTO.getTimeUnit();
+        this.unitTime = getTimeInMilliSeconds(requestCountLimitDTO.getUnitTime(), requestCountLimitDTO.getTimeUnit());
         this.funcName = GeneratorConstants.APPLICATION_INIT_FUNC_PREFIX + applicationPolicy.getPolicyName()
                 + GeneratorConstants.INIT_FUNC_SUFFIX;
         this.policyKey = GeneratorConstants.APPLICATION_KEY;
@@ -124,8 +117,7 @@ public class ThrottlePolicy {
         this.name = applicationPolicy.getPolicyName();
         RequestCountLimitDTO requestCountLimitDTO = (RequestCountLimitDTO) applicationPolicy.getDefaultLimit();
         this.count = requestCountLimitDTO.getRequestCount();
-        this.unitTime = requestCountLimitDTO.getUnitTime();
-        this.timeUnit = requestCountLimitDTO.getTimeUnit();
+        this.unitTime = getTimeInMilliSeconds(requestCountLimitDTO.getUnitTime(), requestCountLimitDTO.getTimeUnit());
         this.funcName = GeneratorConstants.SUBSCRIPTION_INIT_FUNC_PREFIX + applicationPolicy.getPolicyName()
                 + GeneratorConstants.INIT_FUNC_SUFFIX;
         this.policyKey = GeneratorConstants.SUBSCRIPTION_KEY;
@@ -144,5 +136,25 @@ public class ThrottlePolicy {
             this.modelPackage = modelPackage.replaceFirst("\\.", "/");
         }
         return this;
+    }
+
+    private long getTimeInMilliSeconds(int unitTime, String timeUnit) {
+        long milliSeconds;
+        if ("min".equalsIgnoreCase(timeUnit)) {
+            milliSeconds = TimeUnit.MINUTES.toMillis(unitTime);
+        } else if ("hour".equalsIgnoreCase(timeUnit)) {
+            milliSeconds = TimeUnit.HOURS.toMillis(unitTime);
+        } else if ("day".equalsIgnoreCase(timeUnit)) {
+            milliSeconds = TimeUnit.DAYS.toMillis(unitTime);
+        } else if ("week".equalsIgnoreCase(timeUnit)) {
+            milliSeconds = 7 * TimeUnit.DAYS.toMillis(unitTime);
+        } else if ("month".equalsIgnoreCase(timeUnit)) {
+            milliSeconds = 30 * TimeUnit.DAYS.toMillis(unitTime);
+        } else if ("year".equalsIgnoreCase(timeUnit)) {
+            milliSeconds = 365 * TimeUnit.DAYS.toMillis(unitTime);
+        } else {
+            throw new RuntimeException("Unsupported time unit provided");
+        }
+        return milliSeconds;
     }
 }

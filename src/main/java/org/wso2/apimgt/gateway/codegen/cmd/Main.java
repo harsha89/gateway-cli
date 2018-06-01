@@ -24,6 +24,9 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.apache.commons.lang3.StringUtils;
+import org.ballerinalang.packerina.BuilderUtils;
+import org.ballerinalang.packerina.init.InitHandler;
+import org.ballerinalang.packerina.init.models.SrcFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.codegen.CodeGenerator;
@@ -41,13 +44,15 @@ import org.wso2.apimgt.gateway.codegen.token.TokenManagementImpl;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * This class executes the gateway cli program.
- *
  */
 public class Main {
     private static final String JC_UNKNOWN_OPTION_PREFIX = "Unknown option:";
@@ -87,6 +92,16 @@ public class Main {
 //            List<ExtendedAPI> apis = apiService.getAPIs("accounts", accessToken);
 //            CodeGenerator codeGenerator = new CodeGenerator();
 //            codeGenerator.generate(GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts"), apis, true);
+
+
+            String path = GatewayCmdUtils.getLabelDirectoryPath(root, "accounts");
+            String pkgPath = GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts");
+            // Get source root path.
+            Path sourceRootPath = Paths.get(path);
+            Path packagePath = Paths.get(pkgPath);
+            String label = "accounts";
+            InitHandler.initialize(Paths.get(path), null, new ArrayList<SrcFile>(), null);
+            BuilderUtils.compileAndWrite(sourceRootPath, false);
         } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
@@ -163,7 +178,6 @@ public class Main {
 
     /**
      * This class represents the "help" command and it holds arguments and flags specified by the user.
-     *
      */
     @Parameters(commandNames = "help", commandDescription = "print usage information")
     private static class HelpCmd implements GatewayLauncherCmd {
@@ -207,8 +221,7 @@ public class Main {
     }
 
     /**
-     * This class represents the "help" command and it holds arguments and flags specified by the user.
-     *
+     * This class represents the "setup" command and it holds arguments and flags specified by the user.
      */
     @Parameters(commandNames = "setup", commandDescription = "setup information")
     private static class SetupCmd implements GatewayLauncherCmd {
@@ -289,9 +302,12 @@ public class Main {
 
             CodeGenerator codeGenerator = new CodeGenerator();
             try {
+                Path sourceRootPath = Paths.get(root);
                 codeGenerator.generate(GatewayCmdUtils
                                 .getLabelSrcDirectoryPath(root, label),
                         apis, true);
+                InitHandler.initialize(Paths.get(root), null, new ArrayList<SrcFile>(), null);
+                BuilderUtils.compileAndWrite(sourceRootPath, true);
             } catch (IOException | BallerinaServiceGenException e) {
                 outStream.println("Error while generating ballerina source");
                 e.printStackTrace();
@@ -305,7 +321,8 @@ public class Main {
         }
 
         @Override
-        public void setParentCmdParser(JCommander parentCmdParser) { }
+        public void setParentCmdParser(JCommander parentCmdParser) {
+        }
 
         private String promptForTextInput(String msg) {
             outStream.println(msg);
@@ -320,7 +337,6 @@ public class Main {
 
     /**
      * This class represents the "build" command and it holds arguments and flags specified by the user.
-     *
      */
     @Parameters(commandNames = "build", commandDescription = "micro gateway build information")
     private static class BuildCmd implements GatewayLauncherCmd {
@@ -334,7 +350,7 @@ public class Main {
         @Parameter(names = {"-l", "--label"}, hidden = true)
         private String label;
 
-        @Parameter(names = { "--help", "-h", "?" }, hidden = true, description = "for more information")
+        @Parameter(names = {"--help", "-h", "?"}, hidden = true, description = "for more information")
         private boolean helpFlag;
 
         @Parameter(arity = 1)
@@ -353,18 +369,15 @@ public class Main {
                 throw GatewayCmdUtils.createUsageException("too many arguments");
             }
 
+            String root = "/home/harsha/Downloads/myroot";
+            String path = GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts");
+            // Get source root path.
+            Path sourceRootPath = Paths.get(path);
+            label = "accounts";
+            BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, true);
 
-//            // Get source root path.
-//            Path sourceRootPath = Paths.get();
-//            if (argList == null || argList.size() == 0) {
-//                // ballerina build
-//                BuilderUtils.compileAndWrite(sourceRootPath, true);
-//            } else {
-//
-//                BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, true);
-//            }
-//
-//            Runtime.getRuntime().exit(0);
+
+            Runtime.getRuntime().exit(0);
         }
 
         @Override
@@ -385,11 +398,10 @@ public class Main {
 
     /**
      * This class represents the "main" command required by the JCommander.
-     *
      */
     private static class DefaultCmd implements GatewayLauncherCmd {
 
-        @Parameter(names = { "--help", "-h", "?" }, hidden = true, description = "for more information")
+        @Parameter(names = {"--help", "-h", "?"}, hidden = true, description = "for more information")
         private boolean helpFlag;
 
         @Parameter(names = "--java.debug", hidden = true)

@@ -27,7 +27,6 @@ import com.github.jknack.handlebars.io.ClassPathTemplateLoader;
 import com.github.jknack.handlebars.io.FileTemplateLoader;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
-import org.wso2.apimgt.gateway.codegen.cmd.GatewayCliConstants;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.codegen.model.BallerinaService;
 import org.wso2.apimgt.gateway.codegen.model.GenSrcFile;
@@ -35,9 +34,7 @@ import org.wso2.apimgt.gateway.codegen.service.bean.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.codegen.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.codegen.utils.GeneratorConstants;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -72,37 +69,8 @@ public class CodeGenerator {
                     .modelPackage(srcPackage);
             genFiles.add(generateService(definitionContext));
         }
+        genFiles.add(generateCommonEndpoints());
         writeGeneratedSources(genFiles, Paths.get(labelPath), overwrite);
-    }
-
-    /**
-     * Write ballerina definition of a <code>object</code> to a file as described by <code>template.</code>
-     *
-     * @param object       Context object to be used by the template parser
-     * @param templateDir  Directory with all the templates required for generating the source file
-     * @param templateName Name of the parent template to be used
-     * @param outPath      Destination path for writing the resulting source file
-     * @throws IOException when file operations fail
-     *                     file write functionality your self, if you need to customize file writing steps.
-     *                     to a ballerina package.
-     */
-    @Deprecated
-    public void writeBallerina(Object object, String templateDir, String templateName, String outPath)
-            throws IOException {
-        PrintWriter writer = null;
-        try {
-            Template template = compileTemplate(templateDir, templateName);
-            Context context = Context.newBuilder(object).resolver(
-                    MapValueResolver.INSTANCE,
-                    JavaBeanValueResolver.INSTANCE,
-                    FieldValueResolver.INSTANCE).build();
-            writer = new PrintWriter(outPath, "UTF-8");
-            writer.println(template.apply(context));
-        } finally {
-            if (writer != null) {
-                writer.close();
-            }
-        }
     }
 
     private Template compileTemplate(String defaultTemplateDir, String templateName) throws IOException {
@@ -168,35 +136,36 @@ public class CodeGenerator {
     }
 
     /**
+     * Generate common endpoint
+     *
+     * @return generated source files as a list of {@link GenSrcFile}
+     * @throws IOException when code generation with specified templates fails
+     */
+    private GenSrcFile generateCommonEndpoints() throws IOException {
+        GenSrcFile sourceFile = null;
+        String srcFile = GeneratorConstants.ENDPOINTS + GeneratorConstants.BALLERINA_EXTENSION;
+        String endpointContent = getContent(null, GeneratorConstants.DEFAULT_SERVICE_DIR,
+                GeneratorConstants.ENDPOINT_TEMPLATE_NAME);
+        sourceFile = new GenSrcFile(GenSrcFile.GenFileType.GEN_SRC, srcPackage, srcFile, endpointContent);
+        return sourceFile;
+    }
+
+
+    /**
      * Retrieve generated source content as a String value.
      *
-     * @param object       context to be used by template engine
+     * @param endpoints       context to be used by template engine
      * @param templateDir  templates directory
      * @param templateName name of the template to be used for this code generation
      * @return String with populated template
      * @throws IOException when template population fails
      */
-    private String getContent(BallerinaService object, String templateDir, String templateName) throws IOException {
+    private String getContent(Object endpoints, String templateDir, String templateName) throws IOException {
         Template template = compileTemplate(templateDir, templateName);
-        Context context = Context.newBuilder(object)
+        Context context = Context.newBuilder(endpoints)
                 .resolver(MapValueResolver.INSTANCE, JavaBeanValueResolver.INSTANCE, FieldValueResolver.INSTANCE)
                 .build();
         return template.apply(context);
-    }
-
-    private void setupProjectDirectory(String ballerinaHome, String labelName) {
-        String projectPath = ballerinaHome + File.separator
-                + GatewayCliConstants.PROJECTS;
-        String labelPath = projectPath + File.separator + labelName;
-        File projectPathDir = new File(projectPath);
-        if (!projectPathDir.exists()) {
-            projectPathDir.mkdir();
-        }
-
-        File labelPathDir = new File(labelPath);
-        if (!labelPathDir.exists()) {
-            labelPathDir.mkdir();
-        }
     }
 
     public String getSrcPackage() {
