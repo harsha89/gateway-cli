@@ -357,11 +357,6 @@ public class Main {
         public void setParentCmdParser(JCommander parentCmdParser) {
             this.parentCmdParser = parentCmdParser;
         }
-
-        private String promptForTextInput(String msg) {
-            outStream.println(msg);
-            return new String(System.console().readLine());
-        }
     }
 
     /**

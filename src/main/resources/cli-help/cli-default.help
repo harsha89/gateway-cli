@@ -6,7 +6,7 @@ SYNOPSIS
 
 DESCRIPTION
      This a cli tool which allow users to generate ballerina service definition
-     from the APIs
+     from APIs
 
 OPTIONS
 
@@ -18,6 +18,8 @@ OPTIONS
 MICRO GATEWAY COMMANDS
      Available commands are:
          setup        Setup the micro gateway environment
+         build        Generate executables
+         run          Run generated services
 
 EXAMPLES
      Check the current version of micro gateway in use on your system
