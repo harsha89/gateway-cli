@@ -3,12 +3,6 @@ import ballerina/http;
 import ballerina/swagger;
 import wso2/gateway;
 
-endpoint gateway:APIGatewaySecureListener apiSecureListener {
-};
-
-endpoint gateway:APIGatewayListener apiListener {
-};
-
 endpoint http:Client {{qualifiedServiceName}}_EP {
     url: "{{endpointConfig.prodEndpoints.0.endpointUrl}}"
 };

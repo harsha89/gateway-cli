@@ -46,12 +46,11 @@ public class GeneratorConstants {
         }
     }
 
-    public static final String CLIENT_TEMPLATE_NAME = "client-ep";
     public static final String SERVICE_TEMPLATE_NAME = "service";
-    public static final String IMPL_TEMPLATE_NAME = "impl";
-    public static final String SCHEMA_TEMPLATE_NAME = "schemas";
-    public static final String COMMON_MODELS_TEMPLATE_NAME = "common";
     public static final String THROTTLE_POLICY_TEMPLATE_NAME = "policy";
+    public static final String ENDPOINT_TEMPLATE_NAME = "endpoints";
+    public static final String ENDPOINTS = "endpoints";
+    public static final String BALLERINA_EXTENSION = ".bal";
     public static final String THROTTLE_POLICY_INIT_TEMPLATE_NAME = "policy_init";
 
     public static final String SCHEMA_FILE_NAME = "schema.bal";
@@ -64,21 +63,6 @@ public class GeneratorConstants {
 
     public static final String GEN_SRC_DIR = "gen";
     public static final String DEFAULT_SERVICE_PKG = "service";
-
-    public static final String UNTITLED_SERVICE = "UntitledAPI";
-    public static final List<String> RESERVED_KEYWORDS = Collections.unmodifiableList(
-            Arrays.asList("package", "import", "as", "public", "private", "native", "service", "resource", "function",
-                    "object", "annotation", "parameter", "transformer", "worker", "endpoint", "bind", "xmlns",
-                    "returns", "version", "documentation", "deprecated", "from", "on", "group", "by", "having", "order",
-                    "where", "followed", "into", "set", "for", "window", "query", "expired", "current", "every",
-                    "within", "snapshot", "inner", "outer", "right", "left", "full", "unidirectional", "reduce",
-                    "forever", "int", "float", "boolean", "string", "blob", "map", "json", "xml", "table", "stream",
-                    "any", "typedesc", "type", "future", "var", "new", "if", "match", "else", "foreach", "while",
-                    "next", "break", "fork", "join", "some", "all", "timeout", "try", "catch", "finally", "throw",
-                    "return", "transaction", "abort", "fail", "onretry", "retries", "onabort", "oncommit", "lengthof",
-                    "typeof", "with", "in", "lock", "untaint", "async", "await", "but", "check", "done"));
-
-    //    Throttle related constants
     public static final String APPLICATION_POLICY_TYPE = "application";
     public static final String SUBSCRIPTION_POLICY_TYPE = "subscription";
     public static final String APPLICATION_INIT_FUNC_PREFIX = "initApplication";

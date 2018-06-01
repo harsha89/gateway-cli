@@ -25,6 +25,8 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.packerina.BuilderUtils;
+import org.ballerinalang.packerina.init.InitHandler;
+import org.ballerinalang.packerina.init.models.SrcFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.codegen.CodeGenerator;
@@ -91,10 +93,12 @@ public class Main {
             String path = GatewayCmdUtils.getLabelDirectoryPath(root, "accounts");
             String pkgPath = GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts");
             // Get source root path.
-            Path sourceRootPath = Paths.get(pkgPath);
+            Path sourceRootPath = Paths.get(path);
             Path packagePath = Paths.get(pkgPath);
             String label = "accounts";
-            BuilderUtils.compileAndWrite(sourceRootPath, true);
+            InitHandler.initialize(Paths.get(path), null, new ArrayList<SrcFile>(), null);
+            BuilderUtils.compileAndWrite(sourceRootPath, false);
+
         } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
@@ -214,7 +218,7 @@ public class Main {
     }
 
     /**
-     * This class represents the "help" command and it holds arguments and flags specified by the user.
+     * This class represents the "setup" command and it holds arguments and flags specified by the user.
      */
     @Parameters(commandNames = "setup", commandDescription = "setup information")
     private static class SetupCmd implements GatewayLauncherCmd {
