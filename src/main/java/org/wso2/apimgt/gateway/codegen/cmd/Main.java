@@ -64,7 +64,7 @@ public class Main {
 
     public static void main(String... args) {
         try {
-            String tempRoot = "/home/malintha/wso2apim/gitworkspace/gateway-cli/malintha";
+            String tempRoot = "/home/harsha/Downloads/myroot";
             GatewayCmdUtils.createTempDir(tempRoot);
             GatewayCmdUtils.createTempPathTxt(tempRoot, tempRoot);
             String root = GatewayCmdUtils.getProjectRoot(tempRoot);
