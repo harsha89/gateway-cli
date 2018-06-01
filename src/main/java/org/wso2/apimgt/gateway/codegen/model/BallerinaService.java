@@ -23,8 +23,8 @@ import io.swagger.models.Swagger;
 import io.swagger.models.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
-import org.wso2.apimgt.gateway.codegen.service.bean.API;
 import org.wso2.apimgt.gateway.codegen.service.bean.EndpointConfig;
+import org.wso2.apimgt.gateway.codegen.service.bean.ext.ExtendedAPI;
 
 import java.util.AbstractMap;
 import java.util.LinkedHashSet;
@@ -38,7 +38,7 @@ import java.util.Set;
  */
 public class BallerinaService implements BallerinaSwaggerObject<BallerinaService, Swagger> {
     private String name;
-    private API api;
+    private ExtendedAPI api;
     private EndpointConfig endpointConfig;
     private String srcPackage;
     private String modelPackage;
@@ -68,7 +68,7 @@ public class BallerinaService implements BallerinaSwaggerObject<BallerinaService
     }
 
     @Override
-    public BallerinaService buildContext(Swagger definition, API api) throws BallerinaServiceGenException {
+    public BallerinaService buildContext(Swagger definition, ExtendedAPI api) throws BallerinaServiceGenException {
         this.name = trim(api.getName());
         this.api = api;
         this.qualifiedServiceName = trim(api.getName()) + "_" + replaceAllNonAlphaNumeric(api.getVersion());
@@ -179,11 +179,11 @@ public class BallerinaService implements BallerinaSwaggerObject<BallerinaService
         this.endpointConfig = endpointConfig;
     }
 
-    public API getApi() {
+    public ExtendedAPI getApi() {
         return api;
     }
 
-    public void setApi(API api) {
+    public void setApi(ExtendedAPI api) {
         this.api = api;
     }
 

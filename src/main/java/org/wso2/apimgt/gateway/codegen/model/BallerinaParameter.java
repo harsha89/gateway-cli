@@ -18,7 +18,7 @@ package org.wso2.apimgt.gateway.codegen.model;
 
 import io.swagger.models.parameters.Parameter;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
-import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.service.bean.ext.ExtendedAPI;
 
 /**
  * Wraps the {@link Parameter} from swagger models for easier templating.
@@ -38,7 +38,7 @@ public class BallerinaParameter implements BallerinaSwaggerObject<BallerinaParam
     }
 
     @Override
-    public BallerinaParameter buildContext(Parameter parameter, API api) throws BallerinaServiceGenException {
+    public BallerinaParameter buildContext(Parameter parameter, ExtendedAPI api) throws BallerinaServiceGenException {
         this.name = parameter.getName();
         this.in = parameter.getIn();
         this.description = parameter.getDescription();
