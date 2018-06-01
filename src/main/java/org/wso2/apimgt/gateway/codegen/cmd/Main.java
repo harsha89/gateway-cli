@@ -24,7 +24,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.apache.commons.lang3.StringUtils;
-import org.ballerinalang.packerina.BuilderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.codegen.CodeGenerator;
@@ -35,16 +34,13 @@ import org.wso2.apimgt.gateway.codegen.exception.ConfigParserException;
 import org.wso2.apimgt.gateway.codegen.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.codegen.service.APIService;
 import org.wso2.apimgt.gateway.codegen.service.APIServiceImpl;
-import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.service.bean.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagement;
 import org.wso2.apimgt.gateway.codegen.token.TokenManagementImpl;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,39 +59,43 @@ public class Main {
 
     public static void main(String... args) {
         try {
-            String tempRoot = "/home/harsha/Downloads/myroot";
+            String tempRoot = "/home/malintha/wso2apim/gitworkspace/gateway-cli/malintha";
             GatewayCmdUtils.createTempDir(tempRoot);
             GatewayCmdUtils.createTempPathTxt(tempRoot, tempRoot);
             String root = GatewayCmdUtils.getProjectRoot(tempRoot);
             GatewayCmdUtils.createMainProjectStructure(root);
-            GatewayCmdUtils.createLabelProjectStructure(root, "accounts");
+
+//            GatewayCmdUtils.createLabelProjectStructure(root, "accounts");
+//            TokenManagementImpl tokenManagement = new TokenManagementImpl();
+
             GatewayCmdUtils.createMainConfig(root);
             String configPath = GatewayCmdUtils.getMainConfigPath(root) + File.separator + GatewayCliConstants.MAIN_CONFIG_FILE_NAME;
             Config config = ConfigYAMLParser.parse(configPath, Config.class);
             System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
             System.setProperty("javax.net.ssl.trustStore", config.getTokenConfig().getTrustoreLocation());
             System.setProperty("javax.net.ssl.trustStorePassword", config.getTokenConfig().getTrustorePassword());
-            TokenManagementImpl tokenManagement = new TokenManagementImpl();
+
             GatewayCmdUtils.setConfig(config);
             Optional<GatewayLauncherCmd> optionalInvokedCmd = getInvokedCmd(args);
             optionalInvokedCmd.ifPresent(GatewayLauncherCmd::execute);
-            tokenManagement.generateClientIdAndSecret(config);
-            String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(),
-                    config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
-            System.out.println(accessToken);
-            APIService apiService = new APIServiceImpl();
-            List<API> apis = apiService.getApis("accounts", accessToken);
-            CodeGenerator codeGenerator = new CodeGenerator();
-            codeGenerator.generate(GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts"), apis, true);
+
+//            tokenManagement.generateClientIdAndSecret(config);
+//            String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(),
+//                    config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
+//            System.out.println(accessToken);
+//            APIService apiService = new APIServiceImpl();
+//            List<ExtendedAPI> apis = apiService.getAPIs("accounts", accessToken);
+//            CodeGenerator codeGenerator = new CodeGenerator();
+//            codeGenerator.generate(GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts"), apis, true);
         } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
         } catch (ConfigParserException e) {
             outStream.println("Error while parsing the config");
             Runtime.getRuntime().exit(1);
-        } catch (BallerinaServiceGenException e) {
-            outStream.println("Error while generating the ballerina service");
-            Runtime.getRuntime().exit(1);
+//        } catch (BallerinaServiceGenException e) {
+//            outStream.println("Error while generating the ballerina service");
+//            Runtime.getRuntime().exit(1);
         } catch (IOException e) {
             outStream.println("Error while processing files");
             Runtime.getRuntime().exit(1);
@@ -229,10 +229,14 @@ public class Main {
         private boolean overwrite;
 
         @Parameter(names = {"--path"}, hidden = true)
-        private boolean path;
+        private String path;
 
         public void execute() {
-
+            /* temporary hardcoded */
+            username = "admin";
+            password = "admin";
+            /* ******************* */
+            
             Config config = GatewayCmdUtils.getConfig();
             String configuredUser = config.getTokenConfig().getUsername();
 
@@ -257,9 +261,20 @@ public class Main {
                     }
                 }
             }
+            String root = path;
+            try {
+                root = GatewayCmdUtils.getProjectRoot(path);
+                GatewayCmdUtils.createTempDir(path);
+                GatewayCmdUtils.createTempPathTxt(path, path);
+                GatewayCmdUtils.createMainProjectStructure(root);
+                GatewayCmdUtils.createLabelProjectStructure(root, label); 
+            } catch (IOException e) {
+                outStream.println("Error while creating project structure");
+                e.printStackTrace();
+                Runtime.getRuntime().exit(1);
+            }
 
             TokenManagement manager = new TokenManagementImpl();
-
             String clientId = config.getTokenConfig().getClientId();
             if (StringUtils.isEmpty(clientId)) {
                 manager.generateClientIdAndSecret(config);
@@ -270,7 +285,18 @@ public class Main {
             String accessToken = manager.generateAccessToken(username, password.toCharArray(), clientId, clientSecret.toCharArray());
 
             APIService service = new APIServiceImpl();
-            List<API> apis = service.getApis(label, accessToken);
+            List<ExtendedAPI> apis = service.getAPIs(label, accessToken);
+
+            CodeGenerator codeGenerator = new CodeGenerator();
+            try {
+                codeGenerator.generate(GatewayCmdUtils
+                                .getLabelSrcDirectoryPath(root, label),
+                        apis, true);
+            } catch (IOException | BallerinaServiceGenException e) {
+                outStream.println("Error while generating ballerina source");
+                e.printStackTrace();
+                Runtime.getRuntime().exit(1);
+            }
         }
 
         @Override
@@ -328,17 +354,17 @@ public class Main {
             }
 
 
-            // Get source root path.
-            Path sourceRootPath = Paths.get();
-            if (argList == null || argList.size() == 0) {
-                // ballerina build
-                BuilderUtils.compileAndWrite(sourceRootPath, true);
-            } else {
-
-                BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, true);
-            }
-
-            Runtime.getRuntime().exit(0);
+//            // Get source root path.
+//            Path sourceRootPath = Paths.get();
+//            if (argList == null || argList.size() == 0) {
+//                // ballerina build
+//                BuilderUtils.compileAndWrite(sourceRootPath, true);
+//            } else {
+//
+//                BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, true);
+//            }
+//
+//            Runtime.getRuntime().exit(0);
         }
 
         @Override

@@ -31,7 +31,7 @@ import org.wso2.apimgt.gateway.codegen.cmd.GatewayCliConstants;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.codegen.model.BallerinaService;
 import org.wso2.apimgt.gateway.codegen.model.GenSrcFile;
-import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.service.bean.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.codegen.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.codegen.utils.GeneratorConstants;
 
@@ -52,20 +52,20 @@ public class CodeGenerator {
     private String modelPackage;
 
     /**
-     * Generates ballerina source for provided Open API Definition in {@code definitionPath}.
+     * Generates ballerina source for provided Open APIDetailedDTO Definition in {@code definitionPath}.
      * Generated source will be written to a ballerina package at {@code outPath}
      * <p>Method can be user for generating Ballerina mock services and clients</p>
      *
      * @throws IOException                  when file operations fail
      * @throws BallerinaServiceGenException when code generator fails
      */
-    public void generate(String labelPath, List<API> apis, boolean overwrite)
+    public void generate(String labelPath, List<ExtendedAPI> apis, boolean overwrite)
             throws IOException, BallerinaServiceGenException {
         BallerinaService definitionContext;
         SwaggerParser parser;
         Swagger swagger;
         List<GenSrcFile> genFiles = new ArrayList<>();
-        for (API api : apis) {
+        for (ExtendedAPI api : apis) {
             parser = new SwaggerParser();
             swagger = parser.parse(api.getApiDefinition());
             definitionContext = new BallerinaService().buildContext(swagger, api).srcPackage(srcPackage)

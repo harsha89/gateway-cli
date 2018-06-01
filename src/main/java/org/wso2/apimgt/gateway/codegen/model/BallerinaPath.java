@@ -17,11 +17,9 @@
 package org.wso2.apimgt.gateway.codegen.model;
 
 import io.swagger.models.Path;
-import io.swagger.models.Swagger;
-import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
-import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.service.bean.ext.ExtendedAPI;
 
 import java.util.AbstractMap;
 import java.util.LinkedHashSet;
@@ -42,7 +40,7 @@ public class BallerinaPath implements BallerinaSwaggerObject<BallerinaPath, Path
     }
 
     @Override
-    public BallerinaPath buildContext(Path item, API api) throws BallerinaServiceGenException {
+    public BallerinaPath buildContext(Path item, ExtendedAPI api) throws BallerinaServiceGenException {
         Map.Entry<String, BallerinaOperation> entry;
         BallerinaOperation operation;
 

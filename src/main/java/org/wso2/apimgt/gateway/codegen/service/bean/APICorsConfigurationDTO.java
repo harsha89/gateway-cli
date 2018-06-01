@@ -9,11 +9,11 @@ import java.util.List;
 
 
 /**
- * CORS configuration for the API\n
+ * CORS configuration for the APIDetailedDTO\n
  **/
 
 
-@ApiModel(description = "CORS configuration for the API\n")
+@ApiModel(description = "CORS configuration for the APIDetailedDTO\n")
 public class APICorsConfigurationDTO  {
   
   

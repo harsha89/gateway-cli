@@ -18,7 +18,7 @@ package org.wso2.apimgt.gateway.codegen.model;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
-import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.service.bean.ext.ExtendedAPI;
 
 /**
  * Contract interface for creating a ballerina wrapper from a swagger parser object model.
@@ -28,7 +28,7 @@ import org.wso2.apimgt.gateway.codegen.service.bean.API;
  */
 public interface BallerinaSwaggerObject<C, D> {
     /**
-     * Build the Ballerina context model {@code C} for Open API definition/component in {@code D}.
+     * Build the Ballerina context model {@code C} for Open APIDetailedDTO definition/component in {@code D}.
      *
      * @param definition Open Api definition or component
      * @return parsed context model {@code C} of Open Api definition/component {@code D}
@@ -37,7 +37,7 @@ public interface BallerinaSwaggerObject<C, D> {
     C buildContext(D definition) throws BallerinaServiceGenException;
 
     /**
-     * Build the Ballerina context model {@code C} for Open API definition/component in {@code D}.
+     * Build the Ballerina context model {@code C} for Open APIDetailedDTO definition/component in {@code D}.
      * <p>{@link OpenAPI} definition {@code openApi} can be used to access the parent context
      * helpful for building the current context</p>
      *
@@ -46,7 +46,7 @@ public interface BallerinaSwaggerObject<C, D> {
      * @return parsed context model {@code C} of Open Api definition/component {@code D}
      * @throws BallerinaServiceGenException on error when parsing the Open Api definition
      */
-    C buildContext(D definition, API api) throws BallerinaServiceGenException;
+    C buildContext(D definition, ExtendedAPI api) throws BallerinaServiceGenException;
 
     /**
      * Retrieve the default value for this type.

@@ -20,7 +20,7 @@ import io.swagger.models.ExternalDocs;
 import io.swagger.models.Operation;
 import io.swagger.models.parameters.Parameter;
 import org.wso2.apimgt.gateway.codegen.exception.BallerinaServiceGenException;
-import org.wso2.apimgt.gateway.codegen.service.bean.API;
+import org.wso2.apimgt.gateway.codegen.service.bean.ext.ExtendedAPI;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +47,7 @@ public class BallerinaOperation implements BallerinaSwaggerObject<BallerinaOpera
             Arrays.asList("HEAD", "OPTIONS", "PATCH", "DELETE", "POST", "PUT", "GET");
 
     @Override
-    public BallerinaOperation buildContext(Operation operation, API api) throws BallerinaServiceGenException {
+    public BallerinaOperation buildContext(Operation operation, ExtendedAPI api) throws BallerinaServiceGenException {
         if (operation == null) {
             return getDefaultValue();
         }
