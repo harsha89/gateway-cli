@@ -61,8 +61,9 @@ service<http:Service> {{cut qualifiedServiceName " "}} bind apiListener,apiSecur
     }
     @gateway:RateLimit{policy : "{{resourceTier}}"}
     {{operationId}} (endpoint outboundEp, http:Request req) {
-
-    var clientResponse = {{qualifiedServiceName}}_EP->forward("/", req);
+    
+    string urlPostfix = untaint req.rawPath.replace("{{api.context}}/{{api.version}}","");
+    var clientResponse = {{qualifiedServiceName}}_EP->forward(urlPostfix, req);
 
         match clientResponse {
 
