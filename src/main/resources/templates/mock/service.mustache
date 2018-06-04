@@ -60,14 +60,25 @@ service<http:Service> {{cut qualifiedServiceName " "}} bind apiListener,apiSecur
         }
     }
     @gateway:RateLimit{policy : "{{resourceTier}}"}
-    {{operationId}} (endpoint outboundEp, http:Request req{{#parameters}}{{>pathParameters}}{{/parameters}}) {
-            var result = {{qualifiedServiceName}}_EP -> {{key}}("{{../../key}}", request = req);
-            match result {
-                http:Response clientResponse => {
-                    _ = outboundEp -> respond(clientResponse);
-                }
-                any|() => {}
+    {{operationId}} (endpoint outboundEp, http:Request req) {
+
+    var clientResponse = {{qualifiedServiceName}}_EP->forward("/", req);
+
+        match clientResponse {
+
+            http:Response res => {
+                outboundEp->respond(res) but { error e =>
+                log:printError("Error sending response", err = e) };
             }
+
+            error err => {
+                http:Response res = new;
+                res.statusCode = 500;
+                res.setPayload(err.message);
+                outboundEp->respond(res) but { error e =>
+                log:printError("Error sending response", err = e) };
+            }
+        }
     }
 {{/value}}{{/operations}}{{/value}}{{/paths}}
 }

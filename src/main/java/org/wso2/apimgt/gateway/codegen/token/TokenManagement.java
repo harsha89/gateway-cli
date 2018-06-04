@@ -6,5 +6,5 @@ public interface TokenManagement {
 
     String generateAccessToken(String username, char[] password, String clientId, char[] clientSecret);
 
-    String generateClientIdAndSecret(Config config);
+    String generateClientIdAndSecret(Config config, String root);
 }

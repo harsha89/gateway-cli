@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang3.StringUtils;
 import org.wso2.apimgt.gateway.codegen.cmd.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.codegen.config.ConfigYAMLParser;
 import org.wso2.apimgt.gateway.codegen.config.bean.Config;
@@ -37,7 +38,7 @@ public class TokenManagementImpl implements TokenManagement {
             String clientEncoded = DatatypeConverter.printBase64Binary(
                     (clientId + ':' + new String(clientSecret)).getBytes(StandardCharsets.UTF_8));
             urlConn.setRequestProperty("Authorization", "Basic " + clientEncoded);
-            String postParams = "grant_type=password&username="+username+"&password="+new String(password);
+            String postParams = "grant_type=password&username=" + username + "&password=" + new String(password);
             postParams += "&scope=" + TokenManagementConstants.REQUESTED_TOKEN_SCOPE;
             urlConn.getOutputStream().write((postParams).getBytes("UTF-8"));
             System.out.println(postParams);
@@ -62,7 +63,7 @@ public class TokenManagementImpl implements TokenManagement {
     }
 
     @Override
-    public String generateClientIdAndSecret(Config config) {
+    public String generateClientIdAndSecret(Config config, String root) {
         URL url;
         HttpURLConnection urlConn = null;
         try {
@@ -96,7 +97,7 @@ public class TokenManagementImpl implements TokenManagement {
                 String clientSecret = clientSecretNode.asText();
                 config.getTokenConfig().setClientSecret(clientSecret);
                 config.getTokenConfig().setClientId(clientId);
-                String configPath = "/home/harsha/wso2/apim/repos/gateway-codegen/apis-to-ballerina-generator/src/main/resources/default-config.yaml";
+                String configPath = root + "/micro-gw-resources/conf/config.yaml";
                 ConfigYAMLParser.write(configPath, config, Config.class);
             } else { //If DCR call fails
                 throw new RuntimeException("DCR call failed. Status code: " + responseCode);

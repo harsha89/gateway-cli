@@ -69,48 +69,22 @@ public class Main {
             GatewayCmdUtils.createTempPathTxt(tempRoot, tempRoot);
             String root = GatewayCmdUtils.getProjectRoot(tempRoot);
             GatewayCmdUtils.createMainProjectStructure(root);
-
-//            GatewayCmdUtils.createLabelProjectStructure(root, "accounts");
-//            TokenManagementImpl tokenManagement = new TokenManagementImpl();
-
             GatewayCmdUtils.createMainConfig(root);
-            String configPath = GatewayCmdUtils.getMainConfigPath(root) + File.separator + GatewayCliConstants.MAIN_CONFIG_FILE_NAME;
+            String configPath = GatewayCmdUtils.getMainConfigPath(root) + File.separator +
+                                                                            GatewayCliConstants.MAIN_CONFIG_FILE_NAME;
             Config config = ConfigYAMLParser.parse(configPath, Config.class);
             System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
             System.setProperty("javax.net.ssl.trustStore", config.getTokenConfig().getTrustoreLocation());
             System.setProperty("javax.net.ssl.trustStorePassword", config.getTokenConfig().getTrustorePassword());
-
             GatewayCmdUtils.setConfig(config);
             Optional<GatewayLauncherCmd> optionalInvokedCmd = getInvokedCmd(args);
             optionalInvokedCmd.ifPresent(GatewayLauncherCmd::execute);
-
-//            tokenManagement.generateClientIdAndSecret(config);
-//            String accessToken = tokenManagement.generateAccessToken("admin", "admin".toCharArray(),
-//                    config.getTokenConfig().getClientId(), config.getTokenConfig().getClientSecret().toCharArray());
-//            System.out.println(accessToken);
-//            APIService apiService = new APIServiceImpl();
-//            List<ExtendedAPI> apis = apiService.getAPIs("accounts", accessToken);
-//            CodeGenerator codeGenerator = new CodeGenerator();
-//            codeGenerator.generate(GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts"), apis, true);
-
-
-            String path = GatewayCmdUtils.getLabelDirectoryPath(root, "accounts");
-            String pkgPath = GatewayCmdUtils.getLabelSrcDirectoryPath(root, "accounts");
-            // Get source root path.
-            Path sourceRootPath = Paths.get(path);
-            Path packagePath = Paths.get(pkgPath);
-            String label = "accounts";
-            InitHandler.initialize(Paths.get(path), null, new ArrayList<SrcFile>(), null);
-            BuilderUtils.compileAndWrite(sourceRootPath, false);
         } catch (CliLauncherException e) {
             outStream.println(e.getMessages());
             Runtime.getRuntime().exit(1);
         } catch (ConfigParserException e) {
             outStream.println("Error while parsing the config");
             Runtime.getRuntime().exit(1);
-//        } catch (BallerinaServiceGenException e) {
-//            outStream.println("Error while generating the ballerina service");
-//            Runtime.getRuntime().exit(1);
         } catch (IOException e) {
             outStream.println("Error while processing files");
             Runtime.getRuntime().exit(1);
@@ -132,7 +106,7 @@ public class Main {
             setupCmd.setParentCmdParser(cmdParser);
 
             BuildCmd buildCmd = new BuildCmd();
-            cmdParser.addCommand(GatewayCliCommands.BUILD, setupCmd);
+            cmdParser.addCommand(GatewayCliCommands.BUILD, buildCmd);
             buildCmd.setParentCmdParser(cmdParser);
 
             cmdParser.setProgramName("micro-gw");
@@ -290,24 +264,25 @@ public class Main {
             TokenManagement manager = new TokenManagementImpl();
             String clientId = config.getTokenConfig().getClientId();
             if (StringUtils.isEmpty(clientId)) {
-                manager.generateClientIdAndSecret(config);
+                manager.generateClientIdAndSecret(config, root);
                 clientId = config.getTokenConfig().getClientId();
             }
 
             String clientSecret = config.getTokenConfig().getClientSecret();
-            String accessToken = manager.generateAccessToken(username, password.toCharArray(), clientId, clientSecret.toCharArray());
+            manager.generateClientIdAndSecret(config, root);
+            String accessToken = manager.generateAccessToken(username, password.toCharArray(),
+                                                                                    clientId, clientSecret.toCharArray());
 
             APIService service = new APIServiceImpl();
             List<ExtendedAPI> apis = service.getAPIs(label, accessToken);
 
             CodeGenerator codeGenerator = new CodeGenerator();
             try {
-                Path sourceRootPath = Paths.get(root);
                 codeGenerator.generate(GatewayCmdUtils
                                 .getLabelSrcDirectoryPath(root, label),
                         apis, true);
-                InitHandler.initialize(Paths.get(root), null, new ArrayList<SrcFile>(), null);
-                BuilderUtils.compileAndWrite(sourceRootPath, true);
+                InitHandler.initialize(Paths.get(GatewayCmdUtils
+                        .getLabelDirectoryPath(root, label)), null, new ArrayList<SrcFile>(), null);
             } catch (IOException | BallerinaServiceGenException e) {
                 outStream.println("Error while generating ballerina source");
                 e.printStackTrace();
@@ -341,9 +316,6 @@ public class Main {
     @Parameters(commandNames = "build", commandDescription = "micro gateway build information")
     private static class BuildCmd implements GatewayLauncherCmd {
 
-        @Parameter(arity = 1, description = "Command name")
-        private List<String> buildCmmands;
-
         @Parameter(names = "--java.debug", hidden = true)
         private String javaDebugPort;
 
@@ -374,9 +346,13 @@ public class Main {
             // Get source root path.
             Path sourceRootPath = Paths.get(path);
             label = "accounts";
-            BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, true);
-
-
+            try {
+                InitHandler.initialize(Paths.get(path), null, new ArrayList<SrcFile>(), null);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Runtime.getRuntime().exit(1);
+            }
+            BuilderUtils.compileAndWrite(sourceRootPath, label, label, true, false);
             Runtime.getRuntime().exit(0);
         }
 
