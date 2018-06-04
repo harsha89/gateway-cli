@@ -19,7 +19,6 @@ package org.wso2.apimgt.gateway.codegen.cmd;
 
 public class GatewayCliConstants {
     public static String BALLERINA_HOME = "BALLERINA_HOME";
-    public static String PROJECTS = "projects";
     public static String MAIN_DIRECTORY_NAME = "micro-gw-resources";
     public static String MAIN_CONF_DIRECTORY_NAME = "conf";
     public static String PROJECTS_DIRECTORY_NAME = "projects";
